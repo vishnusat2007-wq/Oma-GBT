@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("omgbt end-to-end (demo mode)", () => {
+test.describe("OmaGBT end-to-end (demo mode)", () => {
   test("home screen loads with a personalized greeting and rooms", async ({ page }) => {
     await page.goto("/");
     await expect(page).toHaveURL(/\/home/);

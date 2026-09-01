@@ -17,10 +17,10 @@ const baloo = Baloo_2({
 });
 
 export const metadata: Metadata = {
-  title: "omgbt — your magical AI friend",
+  title: "OmaGBT — your magical AI friend",
   description:
-    "omgbt is a private, playful, and safe AI companion made just for one kid: chat, games, magic, stories, and learning.",
-  applicationName: "omgbt",
+    "OmaGBT is a private, playful, and safe AI companion made just for one kid: chat, games, magic, stories, and learning.",
+  applicationName: "OmaGBT",
   robots: { index: false, follow: false },
 };
 

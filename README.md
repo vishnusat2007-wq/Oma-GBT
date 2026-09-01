@@ -1,11 +1,11 @@
-# omgbt 🌟
+# OmaGBT 🌟
 
-**omgbt** is a private, playful, and safe AI companion made for one child. It blends a
+**OmaGBT** is a private, playful, and safe AI companion made for one child. It blends a
 streaming AI friend, a game arcade, a magic room, a story studio, and a learning
 corner into one delightful, kid-friendly experience — with a robust parent dashboard
 and a dedicated safety layer.
 
-> omgbt runs **fully in demo mode with zero configuration** (local storage + deterministic
+> OmaGBT runs **fully in demo mode with zero configuration** (local storage + deterministic
 > mock AI). Add an AI key and/or Supabase to switch to live mode.
 
 ---
@@ -148,5 +148,5 @@ supabase/migrations/        # SQL schema + RLS
 e2e/                        # Playwright tests
 ```
 
-Made with care. omgbt is an AI companion — it is clearly labeled as AI, never claims to be
+Made with care. OmaGBT is an AI companion — it is clearly labeled as AI, never claims to be
 human, and always encourages talking to trusted grown-ups. 💜

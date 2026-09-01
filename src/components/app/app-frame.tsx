@@ -73,7 +73,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
           <Link href="/home" className="mb-4 flex items-center gap-2 px-2">
             <Mascot companion={companion} size={44} animate={false} />
             <span className="font-display text-2xl font-extrabold tracking-tight">
-              omgbt
+              OmaGBT
             </span>
           </Link>
           <nav className="flex flex-1 flex-col gap-1">
@@ -133,7 +133,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
           <div className="mb-3 flex items-center justify-between rounded-2xl border-2 border-border bg-card/80 px-3 py-2 backdrop-blur md:hidden">
             <Link href="/home" className="flex items-center gap-2">
               <Mascot companion={companion} size={34} animate={false} />
-              <span className="font-display text-xl font-extrabold">omgbt</span>
+              <span className="font-display text-xl font-extrabold">OmaGBT</span>
             </Link>
             <div className="flex gap-1.5">
               <button onClick={toggleTheme} aria-label="Toggle theme" className="rounded-xl border-2 border-border p-2">

@@ -63,7 +63,7 @@ export function ParentDashboard() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "omgbt-data-export.json";
+    a.download = "omagbt-data-export.json";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -100,7 +100,7 @@ export function ParentDashboard() {
           <p className="text-muted-foreground">You&apos;re in control of {store.profile.displayName}&apos;s experience.</p>
         </div>
         <Link href="/home" className={buttonVariants({ variant: "outline" })}>
-          <Home className="h-4 w-4" /> Back to omgbt
+          <Home className="h-4 w-4" /> Back to OmaGBT
         </Link>
       </div>
 

@@ -1,8 +1,8 @@
-# omgbt — Architecture overview
+# OmaGBT — Architecture overview
 
 ## High-level
 
-omgbt is a Next.js 16 (App Router) application written in TypeScript. It is organized by
+OmaGBT is a Next.js 16 (App Router) application written in TypeScript. It is organized by
 **feature** rather than by technical layer, so each area of the product (chat, games,
 magic, stories, learn, parent) owns its components and logic.
 

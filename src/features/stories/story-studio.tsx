@@ -115,7 +115,7 @@ export function StoryStudio() {
     if (!w) return;
     const body = pages.map((p) => `<p>${p.text.replace(/</g, "&lt;")}</p>`).join("");
     w.document.write(
-      `<html><head><title>My omgbt Story</title><style>body{font-family:Georgia,serif;max-width:600px;margin:40px auto;padding:0 20px;line-height:1.7}h1{color:#7c3aed}.tag{color:#888;font-size:12px}</style></head><body><h1>My omgbt Story</h1><p class="tag">A story made with ${companion.name} — created by omgbt (AI-assisted)</p>${body}</body></html>`,
+      `<html><head><title>My OmaGBT Story</title><style>body{font-family:Georgia,serif;max-width:600px;margin:40px auto;padding:0 20px;line-height:1.7}h1{color:#7c3aed}.tag{color:#888;font-size:12px}</style></head><body><h1>My OmaGBT Story</h1><p class="tag">A story made with ${companion.name} — created by OmaGBT (AI-assisted)</p>${body}</body></html>`,
     );
     w.document.close();
     w.print();

@@ -78,7 +78,7 @@ export const TOOLS: Record<ToolName, ToolDef> = {
   save_note: {
     name: "save_note",
     title: "Save a note",
-    description: "Keep a note inside omgbt.",
+    description: "Keep a note inside OmaGBT.",
     icon: "📝",
     online: false,
     requiresApproval: false,

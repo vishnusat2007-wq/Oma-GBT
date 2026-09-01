@@ -3,7 +3,7 @@ import { z } from "zod";
 /**
  * Environment configuration and validation.
  *
- * omgbt runs in one of two modes:
+ * OmaGBT runs in one of two modes:
  *  - "demo" (default): no Supabase, no AI key required. Everything works locally
  *    with seeded data and deterministic mock AI responses.
  *  - "live": Supabase + an OpenAI-compatible AI provider are configured.

@@ -1,6 +1,6 @@
-# omgbt — Safety & privacy design
+# OmaGBT — Safety & privacy design
 
-omgbt is built for one child, supervised by one parent. Safety and privacy are core
+OmaGBT is built for one child, supervised by one parent. Safety and privacy are core
 features, not afterthoughts.
 
 ## Safety layer
@@ -58,7 +58,7 @@ Location: `src/lib/safety/moderation.ts` (unit-tested in `moderation.test.ts`).
 - AI-generated content is **clearly labeled** (an “AI” badge on companion messages, and a
   note on printed stories).
 
-## What omgbt intentionally does NOT do
+## What OmaGBT intentionally does NOT do
 
 No autonomous purchasing, financial transactions, social-media posting, messaging strangers,
 downloading executables, changing account settings, revealing location, or browsing

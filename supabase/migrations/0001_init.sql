@@ -1,4 +1,4 @@
--- omgbt initial schema
+-- OmaGBT initial schema
 -- One parent account (auth.users) owns one or more child profiles.
 -- All child-owned data is protected by Row Level Security so a parent can only
 -- ever read/write rows belonging to their own child profiles.
