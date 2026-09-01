@@ -19,6 +19,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useAppStore } from "@/lib/store/app-store";
+import { buildAchievements } from "@/lib/data/achievements";
 import { getDailySurprise, greetingForTime } from "@/features/home/daily-surprise";
 import { CustomizeDialog } from "@/features/home/customize-dialog";
 import { celebrate } from "@/lib/celebrate";
@@ -40,7 +41,11 @@ export default function HomePage() {
   const demoMode = useAppStore((s) => s.demoMode);
   const permissions = useAppStore((s) => s.permissions);
   const conversations = useAppStore((s) => s.conversations);
-  const achievements = useAppStore((s) => s.achievements());
+  const unlockedAchievements = useAppStore((s) => s.unlockedAchievements);
+  const achievements = React.useMemo(
+    () => buildAchievements(unlockedAchievements),
+    [unlockedAchievements],
+  );
   const soundOn = useAppStore((s) => s.preferences.soundOn);
 
   const [customizeOpen, setCustomizeOpen] = React.useState(false);
