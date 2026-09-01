@@ -1,30 +1,43 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Nunito, Baloo_2 } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme/theme-provider";
+import { AppStoreProvider } from "@/lib/store/app-store";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const nunito = Nunito({
+  variable: "--font-nunito",
   subsets: ["latin"],
+  weight: ["400", "600", "700", "800"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const baloo = Baloo_2({
+  variable: "--font-baloo",
   subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
-  title: "Oma-GBT — your cozy AI assistant",
+  title: "omgbt — your magical AI friend",
   description:
-    "Oma-GBT is a warm, grandmother-style chatbot. Works offline out of the box, and gets smarter with an OpenAI key.",
+    "omgbt is a private, playful, and safe AI companion made just for one kid: chat, games, magic, stories, and learning.",
+  applicationName: "omgbt",
+  robots: { index: false, follow: false },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#8b5cf6",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="en" suppressHydrationWarning className={`${nunito.variable} ${baloo.variable}`}>
+      <body className="min-h-full">
+        <ThemeProvider>
+          <AppStoreProvider>{children}</AppStoreProvider>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

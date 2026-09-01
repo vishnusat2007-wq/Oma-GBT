@@ -1,49 +1,123 @@
-import { generateOmaReply, type ChatMessage } from "@/lib/oma";
+import { z } from "zod";
+import { getAiProvider } from "@/lib/ai";
+import { checkUserInput } from "@/lib/safety/moderation";
+import { rateLimit } from "@/lib/rate-limit";
+import { isAiConfigured } from "@/lib/env";
 
-interface ChatRequestBody {
-  messages?: ChatMessage[];
+export const runtime = "nodejs";
+
+const messageSchema = z.object({
+  role: z.enum(["user", "assistant", "system"]),
+  content: z.string().max(4000),
+});
+
+const contextSchema = z.object({
+  companionName: z.string().max(40).default("Pip"),
+  childName: z.string().max(40).default("friend"),
+  ageRange: z.string().max(10).default("7-8"),
+  personality: z.array(z.string().max(20)).max(6).default([]),
+  interests: z.array(z.string().max(30)).max(12).default([]),
+  memories: z
+    .array(z.object({ key: z.string().max(60), value: z.string().max(200) }))
+    .max(50)
+    .default([]),
+});
+
+const bodySchema = z.object({
+  messages: z.array(messageSchema).min(1).max(50),
+  context: contextSchema,
+});
+
+function streamFromText(text: string): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+  const tokens = text.match(/\S+\s*/g) ?? [text];
+  return new ReadableStream({
+    async start(controller) {
+      for (const token of tokens) {
+        controller.enqueue(encoder.encode(token));
+        await new Promise((r) => setTimeout(r, 14));
+      }
+      controller.close();
+    },
+  });
 }
 
-const VALID_ROLES = new Set(["user", "assistant", "system"]);
+const SECURITY_HEADERS: Record<string, string> = {
+  "Cache-Control": "no-store",
+  "X-Content-Type-Options": "nosniff",
+  "Content-Type": "text/plain; charset=utf-8",
+};
 
 export async function POST(request: Request) {
-  let body: ChatRequestBody;
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "local";
+
+  const limit = rateLimit(`chat:${ip}`, { limit: 30, windowMs: 60_000 });
+  if (!limit.ok) {
+    return Response.json(
+      { error: "Slow down a little! Please try again in a moment." },
+      { status: 429, headers: { "Retry-After": "20" } },
+    );
+  }
+
+  let json: unknown;
   try {
-    body = (await request.json()) as ChatRequestBody;
+    json = await request.json();
   } catch {
-    return Response.json({ error: "Invalid JSON body" }, { status: 400 });
+    return Response.json({ error: "Invalid request." }, { status: 400 });
   }
 
-  const messages = body.messages;
-  if (!Array.isArray(messages) || messages.length === 0) {
+  const parsed = bodySchema.safeParse(json);
+  if (!parsed.success) {
     return Response.json(
-      { error: "`messages` must be a non-empty array" },
+      { error: "That message didn't look right." },
       { status: 400 },
     );
   }
 
-  const isValid = messages.every(
-    (m) =>
-      m &&
-      typeof m.content === "string" &&
-      typeof m.role === "string" &&
-      VALID_ROLES.has(m.role),
-  );
-  if (!isValid) {
-    return Response.json(
-      { error: "Each message needs a valid `role` and string `content`" },
-      { status: 400 },
-    );
+  const { messages, context } = parsed.data;
+  const lastUser = [...messages].reverse().find((m) => m.role === "user");
+
+  // Server-side safety gate on the child's input.
+  const safety = checkUserInput(lastUser?.content ?? "");
+  if (!safety.safe && safety.response) {
+    return new Response(streamFromText(safety.response), {
+      headers: {
+        ...SECURITY_HEADERS,
+        "x-omgbt-source": "safety",
+        "x-omgbt-safety": safety.category ?? "",
+        "x-omgbt-action": safety.action,
+        "x-omgbt-urgent": String(safety.urgent),
+      },
+    });
   }
 
-  const { reply, source } = await generateOmaReply(messages);
-  return Response.json({ reply, source });
+  try {
+    const provider = getAiProvider();
+    const stream = await provider.stream({ messages, context });
+    return new Response(stream, {
+      headers: { ...SECURITY_HEADERS, "x-omgbt-source": provider.id },
+    });
+  } catch (err) {
+    console.error("[omgbt] chat error", {
+      configured: isAiConfigured(),
+      message: err instanceof Error ? err.message : "unknown",
+    });
+    return new Response(
+      streamFromText(
+        "Oops, my thinking cap slipped for a second! 🎩 Let's try that again in a moment.",
+      ),
+      { headers: { ...SECURITY_HEADERS, "x-omgbt-source": "error" } },
+    );
+  }
 }
 
 export async function GET() {
   return Response.json({
     status: "ok",
-    service: "oma-gbt",
-    hint: "POST { messages: [{ role, content }] } to chat with Oma.",
+    service: "omgbt-chat",
+    aiConfigured: isAiConfigured(),
   });
 }
