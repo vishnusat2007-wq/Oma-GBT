@@ -57,7 +57,7 @@ export function createDemoData(): AppData {
     demoMode: true,
     profile: {
       id: "child_demo",
-      displayName: "Explorer",
+      displayName: "Jesvitha",
       ageRange: "7-8",
       createdAt: iso(20),
     },
@@ -93,7 +93,7 @@ export function createDemoData(): AppData {
         conversationId,
         role: "assistant",
         content:
-          "Hi Explorer! I'm Pip. 🌟 Want to hear a fun fact about space, or should we make up a story together?",
+          "Hi Jesvitha! I'm Pip. 🌟 Want to hear a fun fact about space, or should we make up a story together?",
         kind: "text",
         createdAt: iso(2),
         aiGenerated: true,
@@ -127,12 +127,12 @@ export function createDemoData(): AppData {
       {
         id: "story_1",
         title: "The Dragon Who Loved Stars",
-        characters: ["Ember the dragon", "Explorer"],
+        characters: ["Ember the dragon", "Jesvitha"],
         setting: "a mountain that touches the sky",
         mood: "cozy",
         pages: [
           { id: "p1", text: "Ember the dragon curled up on the tallest mountain, counting the stars one by one." },
-          { id: "p2", text: "Suddenly, a shooting star zoomed past! Ember and Explorer decided to chase it together.", choiceTaken: "Chase the star" },
+          { id: "p2", text: "Suddenly, a shooting star zoomed past! Ember and Jesvitha decided to chase it together.", choiceTaken: "Chase the star" },
         ],
         createdAt: iso(7),
         favorite: true,

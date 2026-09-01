@@ -1,10 +1,38 @@
 import { test, expect } from "@playwright/test";
 
+test.describe("OmaGBT sign-in", () => {
+  test("requires a username and password, and accepts the correct ones", async ({ page }) => {
+    await page.goto("/home");
+    // Login screen is shown.
+    await expect(page.getByRole("heading", { name: "OmaGBT" })).toBeVisible();
+    await expect(page.getByText(/Jesvitha/i)).toBeVisible();
+
+    // Wrong credentials are rejected.
+    await page.getByLabel("Username").fill("wrong");
+    await page.getByLabel("Password", { exact: true }).fill("0000");
+    await page.getByRole("button", { name: /Let me in/i }).click();
+    await expect(page.getByText(/isn't right/i)).toBeVisible();
+
+    // Correct credentials let Jesvitha in.
+    await page.getByLabel("Username").fill("VlovesJ");
+    await page.getByLabel("Password", { exact: true }).fill("105441");
+    await page.getByRole("button", { name: /Let me in/i }).click();
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(/Jesvitha/i);
+  });
+});
+
 test.describe("OmaGBT end-to-end (demo mode)", () => {
+  // Pre-authenticate so feature tests skip the sign-in screen.
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.sessionStorage.setItem("omagbt.session", "1");
+    });
+  });
+
   test("home screen loads with a personalized greeting and rooms", async ({ page }) => {
     await page.goto("/");
     await expect(page).toHaveURL(/\/home/);
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(/,/);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(/Jesvitha/i);
     await expect(page.getByRole("link", { name: /Chat/i }).first()).toBeVisible();
     await expect(page.getByText(/Demo mode/i).first()).toBeVisible();
   });
@@ -14,9 +42,7 @@ test.describe("OmaGBT end-to-end (demo mode)", () => {
     const input = page.getByLabel("Type your message");
     await input.fill("hello there");
     await page.getByRole("button", { name: "Send" }).click();
-    // The child's message shows immediately.
     await expect(page.getByText("hello there")).toBeVisible();
-    // The mock companion streams a reply containing a greeting.
     await expect(page.getByText(/happy to see you|Hi /i).first()).toBeVisible({ timeout: 15000 });
   });
 
@@ -24,7 +50,6 @@ test.describe("OmaGBT end-to-end (demo mode)", () => {
     await page.goto("/arcade");
     await page.getByText("Rock Paper Scissors").click();
     await expect(page.getByRole("heading", { name: /Rock/i })).toBeVisible();
-    // Pick "rock".
     await page.getByRole("button", { name: "✊" }).click();
     await expect(page.getByText(/You win!|I got you!|It's a tie/i)).toBeVisible({ timeout: 10000 });
   });

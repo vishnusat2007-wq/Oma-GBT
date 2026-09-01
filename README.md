@@ -1,9 +1,12 @@
 # OmaGBT 🌟
 
-**OmaGBT** is a private, playful, and safe AI companion made for one child. It blends a
-streaming AI friend, a game arcade, a magic room, a story studio, and a learning
-corner into one delightful, kid-friendly experience — with a robust parent dashboard
-and a dedicated safety layer.
+**OmaGBT** is a private, playful, and safe AI companion made for one child — **Jesvitha**.
+It blends a streaming AI friend, a game arcade, a magic room, a story studio, and a
+learning corner into one delightful, kid-friendly experience — with a robust parent
+dashboard and a dedicated safety layer.
+
+The app opens with a friendly **sign-in screen** (username + password), so it stays
+private to Jesvitha.
 
 > OmaGBT runs **fully in demo mode with zero configuration** (local storage + deterministic
 > mock AI). Add an AI key and/or Supabase to switch to live mode.
@@ -48,10 +51,28 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:3000>. No keys required — you get a fictional child profile,
-seeded data, local games, mock AI chat, and working tool-approval demos.
+Open <http://localhost:3000>. You'll be greeted by the sign-in screen.
 
-The demo **parent PIN is `1234`**.
+**Sign in**
+- Username: `VlovesJ`
+- Password: `105441`
+
+No keys required — after signing in you get Jesvitha's profile, seeded data, local games,
+mock AI chat, and working tool-approval demos. The **parent PIN is `1234`** in demo mode.
+
+### Changing the sign-in credentials
+
+The password is **never stored in the repo** — only a SHA-256 hash of `username:password`
+is kept (`src/lib/auth.ts`). To change it, generate a new hash and set it via
+`NEXT_PUBLIC_AUTH_HASH` (or replace `DEFAULT_AUTH_HASH`):
+
+```bash
+node -e "const c=require('crypto');console.log(c.createHash('sha256').update('NEWUSER:NEWPASS').digest('hex'))"
+```
+
+Sign-in is a client-side gate suited to a personal device (matching the demo-first design).
+For an internet-facing deployment, use a real identity provider — the Supabase Auth clients
+are already included.
 
 ## 🔧 Configuration & modes
 

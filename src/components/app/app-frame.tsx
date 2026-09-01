@@ -16,7 +16,9 @@ import {
   Sun,
   Volume2,
   VolumeX,
+  LogOut,
 } from "lucide-react";
+import { setSignedIn } from "@/lib/auth";
 import { useAppStore } from "@/lib/store/app-store";
 import { useTheme } from "@/components/theme/theme-provider";
 import { Mascot } from "@/components/mascot/mascot";
@@ -54,6 +56,11 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
   const setPreferences = useAppStore((s) => s.setPreferences);
   const registerVisit = useAppStore((s) => s.registerVisit);
   const { theme, toggleTheme } = useTheme();
+
+  const signOut = React.useCallback(() => {
+    setSignedIn(false);
+    window.location.reload();
+  }, []);
 
   React.useEffect(() => {
     if (hydrated) registerVisit();
@@ -124,6 +131,12 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
             >
               <Lock className="h-4 w-4" /> Parents
             </Link>
+            <button
+              onClick={signOut}
+              className="flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-muted-foreground hover:bg-muted"
+            >
+              <LogOut className="h-4 w-4" /> Sign out
+            </button>
           </div>
         </aside>
 
@@ -149,6 +162,9 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
               <Link href="/parent" aria-label="Parents area" className="rounded-xl border-2 border-border p-2">
                 <Lock className="h-4 w-4" />
               </Link>
+              <button onClick={signOut} aria-label="Sign out" className="rounded-xl border-2 border-border p-2">
+                <LogOut className="h-4 w-4" />
+              </button>
             </div>
           </div>
 
