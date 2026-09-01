@@ -17,6 +17,7 @@ import {
   Archive,
   Trash2,
   ShieldAlert,
+  Headphones,
 } from "lucide-react";
 import { Mascot, type MascotMood } from "@/components/mascot/mascot";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,9 @@ export function ChatView() {
   const chat = useCompanionChat(activeId);
   const [input, setInput] = React.useState("");
   const [listening, setListening] = React.useState(false);
+  const [talkMode, setTalkMode] = React.useState(false);
+  const voiceInput = speechSupported();
+  const voiceOutput = ttsSupported();
   const [memoryOpen, setMemoryOpen] = React.useState(false);
   const [convoOpen, setConvoOpen] = React.useState(false);
   const [renaming, setRenaming] = React.useState<string | null>(null);
@@ -121,7 +125,12 @@ export function ChatView() {
     recognitionRef.current = rec;
     rec.onresult = (e) => {
       const transcript = e.results[0][0].transcript;
-      setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+      if (talkMode) {
+        // Hands-free: speak it and send right away.
+        handleSend(transcript);
+      } else {
+        setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+      }
     };
     rec.onend = () => setListening(false);
     rec.onerror = () => setListening(false);
@@ -151,11 +160,31 @@ export function ChatView() {
             <Button size="icon" variant="ghost" aria-label="Memories" onClick={() => setMemoryOpen(true)}>
               <Brain className="h-5 w-5" />
             </Button>
-            {ttsSupported() && (
+            {(voiceInput || voiceOutput) && (
+              <Button
+                size="icon"
+                variant={talkMode ? "default" : "ghost"}
+                aria-label={talkMode ? "Turn off talk mode" : "Turn on talk mode"}
+                title="Talk mode (voice conversation)"
+                onClick={() => {
+                  const next = !talkMode;
+                  setTalkMode(next);
+                  if (next) {
+                    if (voiceOutput) setPreferences({ ttsOn: true });
+                  } else {
+                    stopSpeaking();
+                  }
+                }}
+              >
+                <Headphones className="h-5 w-5" />
+              </Button>
+            )}
+            {voiceOutput && (
               <Button
                 size="icon"
                 variant="ghost"
                 aria-label={ttsOn ? "Turn off read-aloud" : "Turn on read-aloud"}
+                title="Read replies aloud"
                 onClick={() => {
                   if (ttsOn) stopSpeaking();
                   setPreferences({ ttsOn: !ttsOn });
@@ -270,6 +299,31 @@ export function ChatView() {
 
       {/* Controls */}
       <div className="shrink-0 space-y-2">
+        {talkMode && (
+          <div className="flex items-center justify-between gap-2 rounded-2xl border-2 border-primary bg-primary/10 px-3 py-2">
+            <span className="text-sm font-bold">
+              🎙️ Talk mode {voiceInput ? "— tap Talk and speak; I'll answer out loud!" : "— I'll read my replies aloud."}
+            </span>
+            {voiceInput && (
+              <Button
+                size="sm"
+                variant={listening ? "destructive" : "default"}
+                onClick={toggleMic}
+                disabled={chat.isStreaming}
+              >
+                {listening ? (
+                  <>
+                    <MicOff className="h-4 w-4" /> Listening…
+                  </>
+                ) : (
+                  <>
+                    <Mic className="h-4 w-4" /> Talk
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        )}
         {(chat.isStreaming || chat.messages.some((m) => m.role === "assistant")) && (
           <div className="flex gap-2">
             {chat.isStreaming ? (
@@ -290,13 +344,14 @@ export function ChatView() {
           }}
           className="flex items-center gap-2"
         >
-          {speechSupported() && (
+          {voiceInput && (
             <Button
               type="button"
               size="icon"
               variant={listening ? "destructive" : "outline"}
               onClick={toggleMic}
-              aria-label={listening ? "Stop listening" : "Speak"}
+              aria-label={listening ? "Stop listening" : "Speak to type"}
+              title="Speak to type"
             >
               {listening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
             </Button>
@@ -304,7 +359,7 @@ export function ChatView() {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={`Message ${companion.name}…`}
+            placeholder={voiceInput ? `Type or talk to ${companion.name}…` : `Message ${companion.name}…`}
             aria-label="Type your message"
             maxLength={1000}
           />
