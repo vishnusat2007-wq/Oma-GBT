@@ -1,0 +1,16 @@
+{
+  "name": "Oma-GBT",
+  "install": "npm install",
+  "terminals": [
+    {
+      "name": "next-dev",
+      "command": "npm run dev"
+    }
+  ],
+  "ports": [
+    {
+      "name": "web",
+      "port": 3000
+    }
+  ]
+}
