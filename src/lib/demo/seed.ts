@@ -68,7 +68,7 @@ export function createDemoData(): AppData {
       accessory: "crown",
       personality: ["silly", "curious", "gentle"],
       interests: ["space", "dinosaurs", "drawing"],
-      voicePitch: 1.3,
+      voicePitch: 1.05,
       voiceRate: 1,
     },
     conversations: [

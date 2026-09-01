@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local Vercel CLI build output and Playwright artifacts:
+    ".vercel/**",
+    "test-results/**",
+    "playwright-report/**",
   ]),
 ]);
 

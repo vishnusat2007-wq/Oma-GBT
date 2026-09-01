@@ -17,7 +17,7 @@ import {
   Archive,
   Trash2,
   ShieldAlert,
-  Headphones,
+  PhoneCall,
 } from "lucide-react";
 import { Mascot, type MascotMood } from "@/components/mascot/mascot";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import { useCompanionChat } from "./use-chat";
 import { MessageBubble } from "./message-bubble";
 import { ToolApprovalCard } from "./tool-approval-card";
 import { MemoryPanel } from "./memory-panel";
+import { VoiceCall } from "./voice-call";
 import {
   getRecognition,
   speechSupported,
@@ -75,7 +76,7 @@ export function ChatView() {
   const chat = useCompanionChat(activeId);
   const [input, setInput] = React.useState("");
   const [listening, setListening] = React.useState(false);
-  const [talkMode, setTalkMode] = React.useState(false);
+  const [voiceCallOpen, setVoiceCallOpen] = React.useState(false);
   const voiceInput = speechSupported();
   const voiceOutput = ttsSupported();
   const [memoryOpen, setMemoryOpen] = React.useState(false);
@@ -96,15 +97,15 @@ export function ChatView() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat.messages, chat.streamingText]);
 
-  // Auto-speak the latest assistant message when TTS is on.
+  // Auto-speak the latest assistant message when TTS is on (voice call handles its own speech).
   React.useEffect(() => {
-    if (!ttsOn || chat.isStreaming) return;
+    if (voiceCallOpen || !ttsOn || chat.isStreaming) return;
     const last = chat.messages[chat.messages.length - 1];
     if (last && last.role === "assistant" && last.id !== lastSpokenRef.current) {
       lastSpokenRef.current = last.id;
       speak(last.content, companion);
     }
-  }, [chat.messages, chat.isStreaming, ttsOn, companion]);
+  }, [chat.messages, chat.isStreaming, ttsOn, companion, voiceCallOpen]);
 
   function handleSend(text: string) {
     const value = text.trim();
@@ -125,12 +126,7 @@ export function ChatView() {
     recognitionRef.current = rec;
     rec.onresult = (e) => {
       const transcript = e.results[0][0].transcript;
-      if (talkMode) {
-        // Hands-free: speak it and send right away.
-        handleSend(transcript);
-      } else {
-        setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
-      }
+      setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
     };
     rec.onend = () => setListening(false);
     rec.onerror = () => setListening(false);
@@ -163,20 +159,15 @@ export function ChatView() {
             {(voiceInput || voiceOutput) && (
               <Button
                 size="icon"
-                variant={talkMode ? "default" : "ghost"}
-                aria-label={talkMode ? "Turn off talk mode" : "Turn on talk mode"}
-                title="Talk mode (voice conversation)"
+                variant="default"
+                aria-label="Start voice chat"
+                title="Voice chat (talk with your friend)"
                 onClick={() => {
-                  const next = !talkMode;
-                  setTalkMode(next);
-                  if (next) {
-                    if (voiceOutput) setPreferences({ ttsOn: true });
-                  } else {
-                    stopSpeaking();
-                  }
+                  stopSpeaking();
+                  setVoiceCallOpen(true);
                 }}
               >
-                <Headphones className="h-5 w-5" />
+                <PhoneCall className="h-5 w-5" />
               </Button>
             )}
             {voiceOutput && (
@@ -299,30 +290,16 @@ export function ChatView() {
 
       {/* Controls */}
       <div className="shrink-0 space-y-2">
-        {talkMode && (
-          <div className="flex items-center justify-between gap-2 rounded-2xl border-2 border-primary bg-primary/10 px-3 py-2">
-            <span className="text-sm font-bold">
-              🎙️ Talk mode {voiceInput ? "— tap Talk and speak; I'll answer out loud!" : "— I'll read my replies aloud."}
-            </span>
-            {voiceInput && (
-              <Button
-                size="sm"
-                variant={listening ? "destructive" : "default"}
-                onClick={toggleMic}
-                disabled={chat.isStreaming}
-              >
-                {listening ? (
-                  <>
-                    <MicOff className="h-4 w-4" /> Listening…
-                  </>
-                ) : (
-                  <>
-                    <Mic className="h-4 w-4" /> Talk
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
+        {(voiceInput || voiceOutput) && (
+          <button
+            onClick={() => {
+              stopSpeaking();
+              setVoiceCallOpen(true);
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-primary bg-primary/10 px-3 py-2 font-bold text-primary transition-colors hover:bg-primary/20"
+          >
+            <PhoneCall className="h-5 w-5" /> Start voice chat — talk with {companion.name}
+          </button>
         )}
         {(chat.isStreaming || chat.messages.some((m) => m.role === "assistant")) && (
           <div className="flex gap-2">
@@ -451,6 +428,16 @@ export function ChatView() {
           ))}
         </ul>
       </Dialog>
+
+      <AnimatePresence>
+        {voiceCallOpen && (
+          <VoiceCall
+            chat={chat}
+            companion={companion}
+            onClose={() => setVoiceCallOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

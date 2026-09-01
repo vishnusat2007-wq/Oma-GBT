@@ -320,7 +320,7 @@ const useAppStoreBase = create<AppStore>()(
       },
     }),
     {
-      name: "omagbt.appdata.v2",
+      name: "omagbt.appdata.v3",
       partialize: (state) => {
         const entries = Object.entries(state).filter(
           ([k, v]) => typeof v !== "function" && k !== "hydrated",
