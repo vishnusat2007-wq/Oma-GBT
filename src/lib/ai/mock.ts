@@ -33,6 +33,14 @@ export function mockReply(req: AiRequest): string {
   if (!text.trim()) {
     return `Hi ${name}! I'm ${companion}. What would you like to do — chat, a game, a story, or a fun fact? 🌟`;
   }
+  // Answer wellbeing questions before hi/hello so "how are you?" is not treated as a topic change.
+  if (
+    /\bhow(?:'s|s| are) (?:you|it going)\b|\bwhat(?:'s|s) up\b|\bhow do you feel\b/.test(
+      text,
+    )
+  ) {
+    return `I'm feeling great and a little curious today! How are you, ${name}?`;
+  }
   if (/\b(hi|hello|hey|hiya|yo)\b/.test(text)) {
     const interest = req.context.interests[0];
     return `Hi ${name}! So happy to see you. 😄 ${

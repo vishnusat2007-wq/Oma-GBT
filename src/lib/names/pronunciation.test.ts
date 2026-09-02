@@ -29,17 +29,33 @@ describe("prepareTextForSpeech", () => {
   });
 });
 
+const jesvithaPromptContext = {
+  companionName: "Pip",
+  childName: "Jesvitha",
+  ageRange: "7-8",
+  personality: ["gentle"],
+  interests: ["space"],
+  memories: [] as { key: string; value: string }[],
+};
+
 describe("buildSystemPrompt", () => {
   it("instructs the model to keep the child's name spelling exact", () => {
-    const prompt = buildSystemPrompt({
-      companionName: "Pip",
-      childName: "Jesvitha",
-      ageRange: "7-8",
-      personality: ["gentle"],
-      interests: ["space"],
-      memories: [],
-    });
+    const prompt = buildSystemPrompt(jesvithaPromptContext);
     expect(prompt).toContain('spelled exactly "Jesvitha"');
     expect(prompt).toContain('never write "Jeevotha"');
+  });
+
+  it("requires answering simple greetings before any topic change", () => {
+    const prompt = buildSystemPrompt(jesvithaPromptContext);
+    expect(prompt).toContain("## Conversational basics (always follow)");
+    expect(prompt).toMatch(/how are you/i);
+    expect(prompt).toContain("FIRST answer the question briefly in character");
+    expect(prompt).toContain("THEN ask the child how they are");
+    expect(prompt).toContain(
+      "Do not open with an unrelated fact, joke setup, trivia, or topic change",
+    );
+    expect(prompt).toContain("never replace the answer with a random topic");
+    expect(prompt).toContain("Safety rules (never break these)");
+    expect(prompt).toContain("Weave in what you remember about Jesvitha");
   });
 });
