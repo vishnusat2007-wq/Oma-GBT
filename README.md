@@ -8,8 +8,8 @@ dashboard and a dedicated safety layer.
 The app opens with a friendly **sign-in screen** (username + password), so it stays
 private to Jesvitha.
 
-> OmaGBT runs **fully in demo mode with zero configuration** (local storage + deterministic
-> mock AI). Add an AI key and/or Supabase to switch to live mode.
+> Chats, memories, and parent settings sync to **Supabase** after sign-in. Without an AI
+> key the companion still replies with the friendly local mock so the app is always usable.
 
 ---
 
@@ -44,7 +44,7 @@ RLS) · Zod · Vitest (unit) · Playwright (e2e).
 
 ---
 
-## 🚀 Quick start (demo mode)
+## 🚀 Quick start
 
 ```bash
 npm install
@@ -57,8 +57,9 @@ Open <http://localhost:3000>. You'll be greeted by the sign-in screen.
 - Username: `VlovesJ`
 - Password: `105441`
 
-No keys required — after signing in you get Jesvitha's profile, seeded data, local games,
-mock AI chat, and working tool-approval demos. The **parent PIN is `1234`** in demo mode.
+After signing in, Jesvitha's profile and Pip load from the cloud when Supabase is
+configured (otherwise a local cache is used). Mock AI chat and games work without an
+AI key. The **parent PIN defaults to `1234`** until a grown-up changes it.
 
 ### Changing the sign-in credentials
 
@@ -81,44 +82,24 @@ the browser; everything else is server-only.
 
 | Variable | Where | Purpose |
 | --- | --- | --- |
-| `NEXT_PUBLIC_DEMO_MODE` | `.env.local` | `true` forces demo; `false` forces live; unset = auto. |
 | `AI_API_KEY` | server | Enables real streaming AI (OpenAI-compatible). |
 | `AI_BASE_URL` | server | Optional base URL for an OpenAI-compatible endpoint. |
 | `AI_MODEL` | server | Model name (default `gpt-4o-mini`). |
-| `NEXT_PUBLIC_SUPABASE_URL` | browser | Supabase project URL. |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser | Supabase anon key. |
-| `SUPABASE_SERVICE_ROLE_KEY` | server | Server-only admin key (never exposed). |
+| `NEXT_PUBLIC_SUPABASE_URL` | browser / server | Dedicated OmaGBT Supabase project URL. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser / server | Supabase anon key (RPCs only; tables are RLS-locked). |
+| `OMAGBT_HOUSEHOLD_SECRET` | server | Shared secret for `omagbt_load` / `omagbt_save` / `omagbt_wipe`. |
 | `PARENT_PIN` | server | Optional default parent PIN. |
 
-**Switching modes:**
-- **Demo → Live AI:** set `AI_API_KEY` (and optionally `AI_BASE_URL`, `AI_MODEL`), then set
-  `NEXT_PUBLIC_DEMO_MODE=false`. The chat route automatically uses the real provider.
-- **Demo → Live storage:** set the Supabase variables and run the migration (below). With
-  Supabase configured and `NEXT_PUBLIC_DEMO_MODE` unset/`false`, the app is in live mode.
-
-The AI provider and storage are behind clean abstractions (`src/lib/ai`, `src/lib/supabase`)
-so they can be swapped without touching feature code.
-
-## 🗄️ Supabase setup
-
-1. Create a Supabase project and copy the URL + anon key into `.env.local`.
-2. Apply the schema (RLS, indexes, foreign keys, cascade deletes):
-   ```bash
-   supabase db push          # with the Supabase CLI, or
-   psql "$DATABASE_URL" -f supabase/migrations/0001_init.sql
-   ```
-3. (Optional) Seed example rows after creating an auth user: edit the parent UUID in
-   `supabase/seed.sql`, then run it.
-
-Every table has **Row Level Security** so a parent can only access rows belonging to their
-own child profiles. See `supabase/migrations/0001_init.sql`.
+Cloud memory uses security-definer RPCs in `supabase/migrations/0002_cloud_family_memory.sql`.
+Hash `OMAGBT_HOUSEHOLD_SECRET` with SHA-256 and store it in `public.household_auth`.
+Parent **Delete all data** wipes the cloud snapshot and the device cache.
 
 ## ☁️ Deployment (Vercel + Supabase)
 
 1. Push this repo to GitHub and import it into Vercel.
-2. Add the environment variables from the table above in **Vercel → Project → Settings →
-   Environment Variables** (set `NEXT_PUBLIC_DEMO_MODE=false` for production).
-3. Provision Supabase and run the migration against your production database.
+2. Add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and
+   `OMAGBT_HOUSEHOLD_SECRET` in **Vercel → Project → Settings → Environment Variables**.
+3. The dedicated `omagbt` Supabase project already has `0002_cloud_family_memory` applied.
 4. Deploy. The app builds with `next build` and needs no extra configuration.
 
 ---
@@ -141,16 +122,14 @@ The first Playwright run needs browsers: `npx playwright install chromium`.
 
 ## ⚠️ Known limitations
 
-- **Demo-first data layer.** The default experience persists to the browser (Zustand +
-  localStorage). Supabase adapters, typed schema, and RLS migrations are included and the
-  clients are wired; fully routing every store write through Supabase is the documented next
-  step for production.
+- **Cloud memory.** After sign-in, the store syncs through `/api/sync` to Supabase. The
+  device cache still works offline. Parent delete wipes cloud + local.
 - **AI output moderation** relies on a strong safety system prompt plus **input-side**
   moderation. A streaming output filter is stubbed for future work.
 - **Rate limiting** is in-memory (fine for a single-child, single-instance deployment). For
   multi-instance serverless, back it with a shared store (e.g. Upstash Redis).
-- **web_search / check_weather** return safe, clearly-labeled mock data in demo mode; wire a
-  child-safe provider in `src/lib/tools/server.ts` for production.
+- **web_search / check_weather** return kid-safe placeholder results until a child-safe
+  provider is wired in `src/lib/tools/server.ts`.
 - No legal compliance (COPPA/GDPR-K) is claimed; consult a professional before public use.
 
 ## 📁 Project structure

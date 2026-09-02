@@ -215,7 +215,7 @@ export function VoiceCall({
           }
           transition={{ repeat: status === "idle" ? 0 : Infinity, duration: 1.1 }}
         >
-          <Mascot companion={companion} mood={mood} size={200} />
+          <Mascot companion={companion} mood={mood} className="h-auto w-[min(55vw,12.5rem)]" />
         </motion.div>
         <div
           className={cn(

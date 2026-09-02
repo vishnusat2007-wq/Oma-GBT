@@ -59,7 +59,9 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
 
   const signOut = React.useCallback(() => {
     setSignedIn(false);
-    window.location.reload();
+    void fetch("/api/session", { method: "DELETE", credentials: "include" }).finally(() => {
+      window.location.reload();
+    });
   }, []);
 
   React.useEffect(() => {
@@ -144,8 +146,10 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
         <div className="flex min-w-0 flex-1 flex-col pb-24 md:pb-0">
           {/* Mobile top bar */}
           <div className="mb-3 flex items-center justify-between rounded-2xl border-2 border-border bg-card/80 px-3 py-2 backdrop-blur md:hidden">
-            <Link href="/home" className="flex items-center gap-2">
-              <Mascot companion={companion} size={34} animate={false} />
+            <Link href="/home" className="flex min-w-0 items-center gap-2 overflow-visible">
+              <span className="inline-flex h-9 w-9 shrink-0 overflow-visible">
+                <Mascot companion={companion} size={34} animate={false} className="h-9 w-9" />
+              </span>
               <span className="font-display text-xl font-extrabold">OmaGBT</span>
             </Link>
             <div className="flex gap-1.5">

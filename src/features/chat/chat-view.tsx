@@ -142,7 +142,7 @@ export function ChatView() {
       <Card className="shrink-0">
         <CardContent className="flex items-center justify-between gap-2 p-3">
           <div className="flex min-w-0 items-center gap-2">
-            <Mascot companion={companion} mood={mood} size={44} />
+            <Mascot companion={companion} mood={mood} size={44} animate={false} />
             <div className="min-w-0">
               <p className="truncate font-display font-bold">
                 {activeConvo?.title ?? "Chat"}
@@ -195,7 +195,7 @@ export function ChatView() {
       <div className="flex-1 space-y-3 overflow-y-auto rounded-3xl border-2 border-border bg-card/50 p-4">
         {chat.messages.length === 0 && !chat.isStreaming && (
           <div className="flex flex-col items-center gap-3 py-8 text-center">
-            <Mascot companion={companion} mood="excited" size={120} />
+            <Mascot companion={companion} mood="excited" className="h-auto w-[min(40vw,7.5rem)]" />
             <p className="font-display text-xl font-bold">Hi! What should we talk about?</p>
           </div>
         )}

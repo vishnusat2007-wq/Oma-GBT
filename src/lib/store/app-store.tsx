@@ -2,9 +2,11 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { createDemoData, type AppData } from "@/lib/demo/seed";
+import type { ReactNode } from "react";
+import { createInitialData, type AppData } from "@/lib/demo/seed";
 import { buildAchievements } from "@/lib/data/achievements";
 import { randomId } from "@/lib/utils";
+import { serializeAppData } from "@/lib/cloud/payload";
 import type {
   Achievement,
   ApprovedWebsite,
@@ -20,6 +22,8 @@ import type {
   ToolApprovalRequest,
   ToolAuditEvent,
 } from "@/lib/data/types";
+
+export const PERSIST_KEY = "omagbt.appdata.v3";
 
 interface AppActions {
   hydrated: boolean;
@@ -71,7 +75,7 @@ interface AppActions {
 
   registerVisit: () => void;
   exportData: () => string;
-  deleteAllData: () => void;
+  deleteAllData: () => Promise<void>;
 
   achievements: () => Achievement[];
   onlineToolsEnabled: () => boolean;
@@ -79,14 +83,18 @@ interface AppActions {
 
 export type AppStore = AppData & AppActions;
 
+function persistable(state: AppStore): AppData {
+  return serializeAppData(state as unknown as Record<string, unknown>);
+}
+
 const useAppStoreBase = create<AppStore>()(
   persist(
     (set, get) => ({
-      ...createDemoData(),
+      ...createInitialData(),
       hydrated: false,
 
       markHydrated: () => set({ hydrated: true }),
-      resetDemo: () => set({ ...createDemoData(), hydrated: true }),
+      resetDemo: () => set({ ...createInitialData(), hydrated: true }),
 
       setProfile: (patch) => set((s) => ({ profile: { ...s.profile, ...patch } })),
       setCompanion: (patch) => set((s) => ({ companion: { ...s.companion, ...patch } })),
@@ -298,16 +306,25 @@ const useAppStoreBase = create<AppStore>()(
         }));
         if (get().streakDays >= 3) get().unlockAchievement("streak-3");
       },
-      exportData: () => {
-        const s = get();
-        const { hydrated: _h, ...data } = s as AppStore;
-        void _h;
-        const serializable = Object.fromEntries(
-          Object.entries(data).filter(([, v]) => typeof v !== "function"),
-        );
-        return JSON.stringify(serializable, null, 2);
+      exportData: () => JSON.stringify(persistable(get()), null, 2),
+      deleteAllData: async () => {
+        let cloudError: string | null = null;
+        try {
+          const res = await fetch("/api/sync", { method: "DELETE", credentials: "include" });
+          if (!res.ok && res.status !== 401) {
+            cloudError = "Cloud wipe failed";
+          }
+        } catch {
+          cloudError = "Cloud wipe failed";
+        }
+        try {
+          localStorage.removeItem(PERSIST_KEY);
+        } catch {
+          /* ignore quota / private mode */
+        }
+        set({ ...createInitialData(), hydrated: true });
+        if (cloudError) throw new Error(cloudError);
       },
-      deleteAllData: () => set({ ...createDemoData(), hydrated: true }),
 
       achievements: () => buildAchievements(get().unlockedAchievements),
       onlineToolsEnabled: () => {
@@ -320,22 +337,14 @@ const useAppStoreBase = create<AppStore>()(
       },
     }),
     {
-      name: "omagbt.appdata.v3",
-      partialize: (state) => {
-        const entries = Object.entries(state).filter(
-          ([k, v]) => typeof v !== "function" && k !== "hydrated",
-        );
-        return Object.fromEntries(entries) as AppStore;
-      },
-      onRehydrateStorage: () => (state) => {
-        state?.markHydrated();
-      },
+      name: PERSIST_KEY,
+      partialize: (state) => persistable(state) as unknown as AppStore,
     },
   ),
 );
 
 export const useAppStore = useAppStoreBase;
 
-export function AppStoreProvider({ children }: { children: React.ReactNode }) {
+export function AppStoreProvider({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }

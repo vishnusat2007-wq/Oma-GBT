@@ -85,6 +85,7 @@ function Accessory({ accessory }: { accessory: MascotAccessory }) {
 interface MascotProps {
   companion: CompanionConfig;
   mood?: MascotMood;
+  /** Pixel size when the parent does not constrain width. Omit to fill the parent. */
   size?: number;
   className?: string;
   animate?: boolean;
@@ -93,19 +94,24 @@ interface MascotProps {
 export function Mascot({
   companion,
   mood = "idle",
-  size = 180,
+  size,
   className,
   animate = true,
 }: MascotProps) {
   const reduce = useReducedMotion();
-  const shouldAnimate = animate && !reduce;
+  const gradId = React.useId().replace(/:/g, "");
+  const shouldAnimate = animate && !reduce && (size === undefined || size >= 72);
   const bob =
-    mood === "excited" ? [-10, 6, -10] : mood === "sad" ? [0, 3, 0] : [-6, 4, -6];
+    mood === "excited" ? [-8, 5, -8] : mood === "sad" ? [0, 2, 0] : [-4, 3, -4];
 
   return (
     <motion.div
-      className={cn("select-none", className)}
-      style={{ width: size, height: size, color: COLOR_VARS[companion.color] }}
+      className={cn("inline-flex aspect-square max-h-full max-w-full shrink-0 select-none overflow-visible", className)}
+      style={{
+        width: size,
+        height: size,
+        color: COLOR_VARS[companion.color],
+      }}
       animate={shouldAnimate ? { y: bob } : undefined}
       transition={
         shouldAnimate
@@ -115,20 +121,25 @@ export function Mascot({
       role="img"
       aria-label={`${companion.name}, your ${mood} companion`}
     >
-      <svg viewBox="0 0 200 200" width="100%" height="100%">
+      <svg
+        viewBox="0 0 200 200"
+        width="100%"
+        height="100%"
+        preserveAspectRatio="xMidYMid meet"
+        overflow="visible"
+        className="overflow-visible"
+      >
         <defs>
-          <radialGradient id="mascot-body" cx="40%" cy="35%" r="75%">
+          <radialGradient id={`mascot-body-${gradId}`} cx="40%" cy="35%" r="75%">
             <stop offset="0%" stopColor="white" stopOpacity="0.5" />
             <stop offset="55%" stopColor="currentColor" />
             <stop offset="100%" stopColor="currentColor" />
           </radialGradient>
         </defs>
         <ellipse cx="100" cy="188" rx="52" ry="9" fill="rgba(0,0,0,0.12)" />
-        <path d={BODY_PATHS[companion.shape]} fill="url(#mascot-body)" stroke="rgba(0,0,0,0.08)" strokeWidth="2" />
-        {/* cheeks */}
+        <path d={BODY_PATHS[companion.shape]} fill={`url(#mascot-body-${gradId})`} stroke="rgba(0,0,0,0.08)" strokeWidth="2" />
         <circle cx="66" cy="118" r="10" fill="#fb7185" opacity="0.5" />
         <circle cx="134" cy="118" r="10" fill="#fb7185" opacity="0.5" />
-        {/* eyes */}
         <motion.g
           animate={shouldAnimate ? { scaleY: [1, 1, 0.1, 1] } : undefined}
           transition={shouldAnimate ? { duration: 4, repeat: Infinity, times: [0, 0.92, 0.96, 1] } : undefined}
