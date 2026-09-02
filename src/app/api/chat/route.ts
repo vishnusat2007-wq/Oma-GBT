@@ -3,6 +3,7 @@ import { getAiProvider } from "@/lib/ai";
 import { checkUserInput } from "@/lib/safety/moderation";
 import { rateLimit } from "@/lib/rate-limit";
 import { getAiRuntimeStatus, isAiConfigured } from "@/lib/env";
+import { FRIENDLY_CHAT_ERROR } from "@/lib/ai/stream";
 
 export const runtime = "nodejs";
 
@@ -112,7 +113,7 @@ export async function POST(request: Request) {
     });
     return new Response(
       streamFromText(
-        "Oops, my thinking cap slipped for a second! 🎩 Let's try that again in a moment.",
+        FRIENDLY_CHAT_ERROR,
       ),
       { headers: { ...SECURITY_HEADERS, "x-omgbt-source": "error" } },
     );

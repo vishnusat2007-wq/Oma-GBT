@@ -78,15 +78,15 @@ describe("resolveAiProviderId", () => {
     expect(resolveAiProviderId()).toBe("mock");
   });
 
-  it("defaults Gemini model to gemini-3.7-flash", async () => {
+  it("defaults Gemini model to gemini-3.6-flash", async () => {
     process.env = {
       ...withoutGeminiKeys(ORIGINAL_ENV),
       GOOGLE_GENERATIVE_AI_API_KEY: "test-gemini-key",
       AI_PROVIDER: "auto",
     };
     const { env, DEFAULT_GEMINI_MODEL } = await import("@/lib/env");
-    expect(DEFAULT_GEMINI_MODEL).toBe("gemini-3.7-flash");
-    expect(env.server.AI_MODEL).toBe("gemini-3.7-flash");
+    expect(DEFAULT_GEMINI_MODEL).toBe("gemini-3.6-flash");
+    expect(env.server.AI_MODEL).toBe("gemini-3.6-flash");
   });
 
   it("honors an explicit AI_MODEL override", async () => {
@@ -115,7 +115,7 @@ describe("getAiRuntimeStatus", () => {
       service: "omgbt-chat",
       aiConfigured: true,
       aiProvider: "gemini",
-      aiModel: "gemini-3.7-flash",
+      aiModel: "gemini-3.6-flash",
     });
     expect(JSON.stringify(status)).not.toContain("secret-must-not-leak");
   });
