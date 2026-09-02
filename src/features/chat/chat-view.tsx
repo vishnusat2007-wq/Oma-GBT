@@ -50,6 +50,7 @@ const STARTERS = [
 export function ChatView() {
   const conversations = useAppStore((s) => s.conversations);
   const companion = useAppStore((s) => s.companion);
+  const profile = useAppStore((s) => s.profile);
   const addConversation = useAppStore((s) => s.addConversation);
   const renameConversation = useAppStore((s) => s.renameConversation);
   const archiveConversation = useAppStore((s) => s.archiveConversation);
@@ -83,6 +84,10 @@ export function ChatView() {
   const [convoOpen, setConvoOpen] = React.useState(false);
   const [renaming, setRenaming] = React.useState<string | null>(null);
   const [renameText, setRenameText] = React.useState("");
+  const nameContext = React.useMemo(
+    () => ({ childName: profile.displayName }),
+    [profile.displayName],
+  );
   const bottomRef = React.useRef<HTMLDivElement>(null);
   const recognitionRef = React.useRef<ReturnType<typeof getRecognition>>(null);
   const lastSpokenRef = React.useRef<string>("");
@@ -103,9 +108,9 @@ export function ChatView() {
     const last = chat.messages[chat.messages.length - 1];
     if (last && last.role === "assistant" && last.id !== lastSpokenRef.current) {
       lastSpokenRef.current = last.id;
-      speak(last.content, companion);
+      speak(last.content, companion, undefined, nameContext);
     }
-  }, [chat.messages, chat.isStreaming, ttsOn, companion, voiceCallOpen]);
+  }, [chat.messages, chat.isStreaming, ttsOn, companion, voiceCallOpen, nameContext]);
 
   function handleSend(text: string) {
     const value = text.trim();
@@ -205,7 +210,7 @@ export function ChatView() {
             key={m.id}
             message={m}
             companionName={companion.name}
-            onSpeak={ttsSupported() ? (t) => speak(t, companion) : undefined}
+            onSpeak={ttsSupported() ? (t) => speak(t, companion, undefined, nameContext) : undefined}
           />
         ))}
 
@@ -434,6 +439,7 @@ export function ChatView() {
           <VoiceCall
             chat={chat}
             companion={companion}
+            profile={profile}
             onClose={() => setVoiceCallOpen(false)}
           />
         )}

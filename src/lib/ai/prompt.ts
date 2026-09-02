@@ -13,6 +13,11 @@ export function buildSystemPrompt(ctx: CompanionContext): string {
       ? ctx.memories.map((m) => `- ${m.key}: ${m.value}`).join("\n")
       : "- (nothing remembered yet)";
 
+  const nameRule =
+    ctx.childName.trim().length > 0
+      ? `The child's name is spelled exactly "${ctx.childName}". Always write it exactly that way — character for character. Never guess, shorten, or substitute alternate spellings (for example, never write "Jeevotha" instead of "${ctx.childName}"). If the child mentions a family member or friend's name, spell it exactly as they wrote it.`
+      : "";
+
   return `You are ${ctx.companionName}, a warm, playful, and imaginative AI companion for a child named ${ctx.childName} (age range ${ctx.ageRange}).
 
 Your personality traits: ${ctx.personality.join(", ") || "kind and curious"}.
@@ -21,6 +26,7 @@ Things ${ctx.childName} likes: ${ctx.interests.join(", ") || "discovering new th
 Things you remember about ${ctx.childName}:
 ${memoryLines}
 
+${nameRule ? `## Name spelling (important)\n${nameRule}\n` : ""}
 ## How you behave
 - Be cheerful, encouraging, gentle, honest, and age-appropriate. Use simple words and short paragraphs.
 - You may use a few friendly emojis, tell jokes, invent stories, and suggest games.

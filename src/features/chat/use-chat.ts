@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useAppStore } from "@/lib/store/app-store";
+import { fixNameMisspellings } from "@/lib/names/pronunciation";
 import { extractMemories, memoryExists } from "./memory-extract";
 import { detectToolIntent, TOOLS, type ToolProposal } from "@/lib/tools/registry";
 import type { AiChatMessage } from "@/lib/ai/types";
@@ -98,10 +99,11 @@ export function useCompanionChat(conversationId: string) {
           setStreamingText(acc);
         }
 
+        const reply = fixNameMisspellings(acc.trim() || "…", profile.displayName);
         addMessage({
           conversationId,
           role: "assistant",
-          content: acc.trim() || "…",
+          content: reply,
           kind: "text",
           aiGenerated: lastSourceRef.current !== "safety",
         });
@@ -111,7 +113,10 @@ export function useCompanionChat(conversationId: string) {
             addMessage({
               conversationId,
               role: "assistant",
-              content: streamingTextRef.current.trim(),
+              content: fixNameMisspellings(
+                streamingTextRef.current.trim(),
+                profile.displayName,
+              ),
               kind: "text",
               aiGenerated: true,
             });
