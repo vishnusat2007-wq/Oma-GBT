@@ -11,7 +11,7 @@ Browser (React 19, Client Components)
   │
   ├─ Zustand store  ── localStorage cache + /api/sync → Supabase (cloud memory)
   │
-  ├─ /api/chat      ── safety gate → AI provider (mock | OpenAI-compatible) → text stream
+  ├─ /api/chat      ── safety gate → AI provider (mock | Gemini | OpenAI-compatible) → text stream
   └─ /api/tools     ── Zod validation → parent-approval gate → server tool execution
 ```
 
@@ -34,7 +34,7 @@ Browser (React 19, Client Components)
 | Data layer | `src/lib/store/app-store.tsx` | Zustand + `persist` (device cache). |
 | Cloud memory | `src/lib/cloud/*`, `/api/sync` | Supabase RPCs; memories also stored in `cloud_memories`. |
 | Seed data | `src/lib/demo/seed.ts` | Fresh household defaults (Jesvitha + Pip, empty chats). |
-| AI abstraction | `src/lib/ai/*` | `AiProvider` interface; `mock` and `openai` adapters; `getAiProvider()` selects based on env. |
+| AI abstraction | `src/lib/ai/*` | `AiProvider` interface; `mock`, **Gemini (Google AI Studio)**, and `openai` adapters; `getAiProvider()` prefers Gemini when `GOOGLE_GENERATIVE_AI_API_KEY` or `GEMINI_API_KEY` is set. |
 | Safety | `src/lib/safety/moderation.ts` | Input/output checks + untrusted-text sanitization. |
 | Tools | `src/lib/tools/*` | Zod schemas, registry, intent detection (`registry.ts`), server execution (`server.ts`). |
 | Env | `src/lib/env.ts` | Zod-validated env; `isAiConfigured` / `isSupabaseConfigured`. |
@@ -46,8 +46,12 @@ Browser (React 19, Client Components)
    extracts safe memories, and detects a possible tool proposal (never auto-runs).
 2. It `POST`s the conversation + companion context to `/api/chat`.
 3. The route rate-limits, runs the **server-side safety gate** on the child's input, and —
-   if safe — streams the reply from the selected provider as plain UTF-8 text.
-4. The client reads the stream incrementally (mascot shows a “thinking” mood), then commits
+   if safe — streams the reply from the selected provider as plain UTF-8 text. Gemini calls
+   also send child-safe `safetySettings` (`BLOCK_LOW_AND_ABOVE` for hate, harassment,
+   sexual, dangerous, and civic-integrity categories).
+4. `GET /api/chat` returns a secret-free status (`aiConfigured`, `aiProvider`, `aiModel`)
+   used by the parent dashboard and chat header so you can confirm Gemini is live.
+5. The client reads the stream incrementally (mascot shows a “thinking” mood), then commits
    the final assistant message to the store.
 
 ## Tool system

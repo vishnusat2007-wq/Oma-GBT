@@ -1,14 +1,22 @@
-import { isAiConfigured } from "@/lib/env";
+import { resolveAiProviderId } from "@/lib/env";
 import { mockProvider } from "./mock";
+import { geminiProvider } from "./gemini";
 import { openAiProvider } from "./openai";
 import type { AiProvider } from "./types";
 
 /**
- * Selects the active AI provider. Falls back to the deterministic mock provider
- * whenever a real key is not configured, so the app always works.
+ * Selects the active AI provider. Prefers Gemini (Google AI Studio) when its key
+ * is set, then OpenAI-compatible, otherwise the deterministic mock provider.
  */
 export function getAiProvider(): AiProvider {
-  return isAiConfigured() ? openAiProvider : mockProvider;
+  switch (resolveAiProviderId()) {
+    case "gemini":
+      return geminiProvider;
+    case "openai":
+      return openAiProvider;
+    default:
+      return mockProvider;
+  }
 }
 
 export type { AiProvider, AiRequest, AiChatMessage } from "./types";

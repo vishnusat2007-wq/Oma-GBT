@@ -39,8 +39,8 @@ private to Jesvitha.
 ## 🧱 Tech stack
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Framer Motion ·
-Zustand · Vercel AI SDK (`ai`) with an OpenAI-compatible provider · Supabase (auth, DB,
-RLS) · Zod · Vitest (unit) · Playwright (e2e).
+Zustand · Vercel AI SDK (`ai`) with **Google Gemini** (recommended) or an OpenAI-compatible
+provider · Supabase (auth, DB, RLS) · Zod · Vitest (unit) · Playwright (e2e).
 
 ---
 
@@ -82,9 +82,12 @@ the browser; everything else is server-only.
 
 | Variable | Where | Purpose |
 | --- | --- | --- |
-| `AI_API_KEY` | server | Enables real streaming AI (OpenAI-compatible). |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | server | **Recommended.** Gemini key from [Google AI Studio](https://aistudio.google.com/apikey). |
+| `GEMINI_API_KEY` | server | Alias for the Gemini key (also accepted). |
+| `AI_PROVIDER` | server | `auto` (default), `gemini`, or `openai`. |
+| `AI_API_KEY` | server | OpenAI-compatible API key (alternative to Gemini). |
 | `AI_BASE_URL` | server | Optional base URL for an OpenAI-compatible endpoint. |
-| `AI_MODEL` | server | Model name (default `gpt-4o-mini`). |
+| `AI_MODEL` | server | Model name (default `gemini-3.6-flash` with Gemini, else `gpt-4o-mini`). |
 | `NEXT_PUBLIC_SUPABASE_URL` | browser / server | Dedicated OmaGBT Supabase project URL. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser / server | Supabase anon key (RPCs only; tables are RLS-locked). |
 | `OMAGBT_HOUSEHOLD_SECRET` | server | Shared secret for `omagbt_load` / `omagbt_save` / `omagbt_wipe`. |
@@ -93,6 +96,38 @@ the browser; everything else is server-only.
 Cloud memory uses security-definer RPCs in `supabase/migrations/0002_cloud_family_memory.sql`.
 Hash `OMAGBT_HOUSEHOLD_SECRET` with SHA-256 and store it in `public.household_auth`.
 Parent **Delete all data** wipes the cloud snapshot and the device cache.
+
+### Google Gemini setup & verification
+
+This is the Google API OmaGBT actually uses: **Google AI Studio / Gemini** for companion chat.
+There is no Google OAuth callback — the key stays on the server.
+
+1. Open [Google AI Studio](https://aistudio.google.com/apikey) and create an API key.
+2. Copy `.env.example` to `.env.local` and set:
+   ```bash
+   GOOGLE_GENERATIVE_AI_API_KEY=your-key-here
+   AI_PROVIDER=auto
+   AI_MODEL=gemini-3.6-flash
+   ```
+3. Restart `npm run dev`.
+4. Confirm the server selected Gemini (this JSON never includes the key):
+   ```bash
+   curl -s http://localhost:3000/api/chat
+   ```
+   Expected:
+   ```json
+   {"status":"ok","service":"omgbt-chat","aiConfigured":true,"aiProvider":"gemini","aiModel":"gemini-3.6-flash"}
+   ```
+5. Sign in, open **Chat** — the subtitle should say `Live Gemini`.
+6. Open **Parents** (PIN `1234` until changed) — **AI provider** should show `Gemini` and **AI model**
+   should show `gemini-3.6-flash`.
+7. Send a chat message. A real Gemini reply streams back; the response includes
+   `x-omgbt-source: gemini` (not `mock`).
+
+On Vercel, add the same variables under **Project → Settings → Environment Variables**
+(Production + Preview), then redeploy. Do not put the Gemini key in `NEXT_PUBLIC_*`.
+
+A generic `GOOGLE_API_KEY` (Maps, Custom Search, etc.) is **not** treated as a Gemini key.
 
 ## ☁️ Deployment (Vercel + Supabase)
 
@@ -141,7 +176,7 @@ src/
   features/                 # Feature-based modules
     chat/ games/ magic/ stories/ learn/ parent/ home/
   lib/
-    ai/                     # provider abstraction (mock + OpenAI-compatible)
+    ai/                     # provider abstraction (mock + Gemini + OpenAI-compatible)
     data/ demo/ store/      # domain types, seed, Zustand store (demo data layer)
     safety/ tools/ supabase/ env.ts
 supabase/migrations/        # SQL schema + RLS

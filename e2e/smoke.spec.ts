@@ -64,6 +64,8 @@ test.describe("OmaGBT end-to-end", () => {
     await page.getByRole("button", { name: /Unlock/i }).click();
     await expect(page.getByRole("heading", { name: "Parent dashboard" })).toBeVisible();
     await expect(page.getByText(/Demo mode PIN/i)).toHaveCount(0);
+    await expect(page.getByText("AI provider")).toBeVisible();
+    await expect(page.getByText("Mock", { exact: true })).toBeVisible();
   });
 
   test("parent can wipe chats and memories", async ({ page }) => {

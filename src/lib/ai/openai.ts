@@ -1,7 +1,6 @@
-import { streamText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { env } from "@/lib/env";
-import { buildSystemPrompt } from "./prompt";
+import { streamCompanionReply } from "./stream";
 import type { AiProvider, AiRequest } from "./types";
 
 /**
@@ -16,16 +15,6 @@ export const openAiProvider: AiProvider = {
       baseURL: env.server.AI_BASE_URL,
     });
 
-    const result = streamText({
-      model: provider(env.server.AI_MODEL),
-      system: buildSystemPrompt(req.context),
-      messages: req.messages
-        .filter((m) => m.role !== "system")
-        .map((m) => ({ role: m.role, content: m.content })),
-      temperature: 0.8,
-      maxOutputTokens: 700,
-    });
-
-    return result.textStream.pipeThrough(new TextEncoderStream());
+    return streamCompanionReply(req, provider(env.server.AI_MODEL));
   },
 };

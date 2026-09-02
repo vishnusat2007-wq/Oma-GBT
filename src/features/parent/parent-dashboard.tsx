@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAppStore } from "@/lib/store/app-store";
 import { isSupabaseConfigured } from "@/lib/env";
+import { providerLabel, useAiStatus } from "@/features/chat/use-ai-status";
 import { TOOLS } from "@/lib/tools/registry";
 import type { AgeRange, FeaturePermissions } from "@/lib/data/types";
 import { cn } from "@/lib/utils";
@@ -43,7 +44,7 @@ function Row({ label, desc, children }: { label: string; desc?: string; children
 
 export function ParentDashboard() {
   const store = useAppStore();
-  const [aiConfigured, setAiConfigured] = React.useState<boolean | null>(null);
+  const aiStatus = useAiStatus();
   const [newSite, setNewSite] = React.useState({ title: "", url: "" });
   const [pinForm, setPinForm] = React.useState({ current: "", next: "" });
   const [pinMsg, setPinMsg] = React.useState<string | null>(null);
@@ -56,10 +57,6 @@ export function ParentDashboard() {
   } | null>(null);
 
   React.useEffect(() => {
-    fetch("/api/chat")
-      .then((r) => r.json())
-      .then((d) => setAiConfigured(Boolean(d.aiConfigured)))
-      .catch(() => setAiConfigured(false));
     fetch("/api/sync", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : { cloud: false, memoryCount: 0 }))
       .then((d) =>
@@ -200,10 +197,20 @@ export function ParentDashboard() {
               <Row label="Remembered items" desc="Memories stored in the cloud for Pip to recall.">
                 <Badge variant="secondary">{cloudStatus?.memoryCount ?? store.memories.length}</Badge>
               </Row>
-              <Row label="AI provider" desc="Set AI_API_KEY to enable real streaming AI.">
-                <Badge variant={aiConfigured ? "success" : "outline"}>
-                  {aiConfigured === null ? "…" : aiConfigured ? "Connected" : "Mock"}
+              <Row
+                label="AI provider"
+                desc="Set GOOGLE_GENERATIVE_AI_API_KEY (Google AI Studio) or AI_API_KEY. Status comes from GET /api/chat — no secrets are shown."
+              >
+                <Badge variant={aiStatus?.configured ? "success" : "outline"}>
+                  {aiStatus === null
+                    ? "…"
+                    : aiStatus.configured
+                      ? providerLabel(aiStatus.provider)
+                      : "Mock"}
                 </Badge>
+              </Row>
+              <Row label="AI model" desc="Override with AI_MODEL. Default for Gemini is gemini-3.6-flash.">
+                <Badge variant="outline">{aiStatus?.model ?? "…"}</Badge>
               </Row>
               <Row label="Supabase" desc="Cloud storage for memories, chats, and parent settings.">
                 <Badge variant={isSupabaseConfigured() ? "success" : "outline"}>

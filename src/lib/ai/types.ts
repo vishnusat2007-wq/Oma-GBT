@@ -11,7 +11,7 @@ export interface AiRequest {
 }
 
 export interface AiProvider {
-  readonly id: "mock" | "openai";
+  readonly id: "mock" | "openai" | "gemini";
   /** Returns a ReadableStream of UTF-8 text chunks (the assistant reply). */
   stream(req: AiRequest): Promise<ReadableStream<Uint8Array>>;
 }
