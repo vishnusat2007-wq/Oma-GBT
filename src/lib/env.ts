@@ -6,15 +6,20 @@ import { z } from "zod";
  * OmaGBT runs in one of two modes:
  *  - "demo" (default): no Supabase, no AI key required. Everything works locally
  *    with seeded data and deterministic mock AI responses.
- *  - "live": Supabase + an OpenAI-compatible AI provider are configured.
+ *  - "live": Supabase + a real AI provider (Gemini via Google AI Studio, or
+ *    OpenAI-compatible) are configured.
  *
  * Secrets are ONLY ever read on the server. Never import server env into client code.
  */
 
 const serverSchema = z.object({
+  AI_PROVIDER: z.enum(["auto", "gemini", "openai"]).default("auto"),
   AI_API_KEY: z.string().min(1).optional(),
   AI_BASE_URL: z.string().url().optional(),
-  AI_MODEL: z.string().min(1).default("gpt-4o-mini"),
+  AI_MODEL: z.string().min(1).optional(),
+  GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1).optional(),
+  GEMINI_API_KEY: z.string().min(1).optional(),
+  GOOGLE_API_KEY: z.string().min(1).optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   PARENT_PIN: z.string().min(4).max(12).optional(),
 });
@@ -36,8 +41,46 @@ if (!serverEnv.success && typeof window === "undefined") {
   console.warn("[omgbt] Some server env vars are invalid; falling back to demo defaults.");
 }
 
+const parsedServer = serverEnv.success ? serverEnv.data : serverSchema.parse({});
+
+/** Google AI Studio key (https://aistudio.google.com/apikey). */
+export function getGeminiApiKey(): string | undefined {
+  return (
+    parsedServer.GOOGLE_GENERATIVE_AI_API_KEY ||
+    parsedServer.GEMINI_API_KEY ||
+    parsedServer.GOOGLE_API_KEY
+  );
+}
+
+function defaultModelForProvider(provider: "gemini" | "openai"): string {
+  return provider === "gemini" ? "gemini-2.0-flash" : "gpt-4o-mini";
+}
+
+export function resolveAiProviderId(): "mock" | "gemini" | "openai" {
+  const preference = parsedServer.AI_PROVIDER;
+  const hasGemini = Boolean(getGeminiApiKey());
+  const hasOpenAi = Boolean(parsedServer.AI_API_KEY);
+
+  if (preference === "gemini" && hasGemini) return "gemini";
+  if (preference === "openai" && hasOpenAi) return "openai";
+  if (preference === "auto") {
+    if (hasGemini) return "gemini";
+    if (hasOpenAi) return "openai";
+  }
+  return "mock";
+}
+
+export function resolveAiModel(): string {
+  if (parsedServer.AI_MODEL) return parsedServer.AI_MODEL;
+  const provider = resolveAiProviderId();
+  return provider === "mock" ? "mock" : defaultModelForProvider(provider);
+}
+
 export const env = {
-  server: serverEnv.success ? serverEnv.data : serverSchema.parse({}),
+  server: {
+    ...parsedServer,
+    AI_MODEL: resolveAiModel(),
+  },
   public: publicEnv.success ? publicEnv.data : {},
 };
 
@@ -50,7 +93,7 @@ export function isSupabaseConfigured(): boolean {
 
 /** Whether a real AI provider is configured (server-only truth). */
 export function isAiConfigured(): boolean {
-  return Boolean(env.server.AI_API_KEY);
+  return resolveAiProviderId() !== "mock";
 }
 
 /** The app is in demo mode unless explicitly disabled AND Supabase is configured. */

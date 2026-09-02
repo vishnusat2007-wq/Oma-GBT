@@ -44,6 +44,7 @@ function Row({ label, desc, children }: { label: string; desc?: string; children
 export function ParentDashboard() {
   const store = useAppStore();
   const [aiConfigured, setAiConfigured] = React.useState<boolean | null>(null);
+  const [aiProvider, setAiProvider] = React.useState<string | null>(null);
   const [newSite, setNewSite] = React.useState({ title: "", url: "" });
   const [pinForm, setPinForm] = React.useState({ current: "", next: "" });
   const [pinMsg, setPinMsg] = React.useState<string | null>(null);
@@ -52,7 +53,10 @@ export function ParentDashboard() {
   React.useEffect(() => {
     fetch("/api/chat")
       .then((r) => r.json())
-      .then((d) => setAiConfigured(Boolean(d.aiConfigured)))
+      .then((d) => {
+        setAiConfigured(Boolean(d.aiConfigured));
+        setAiProvider(typeof d.aiProvider === "string" ? d.aiProvider : null);
+      })
       .catch(() => setAiConfigured(false));
   }, []);
 
@@ -180,9 +184,20 @@ export function ParentDashboard() {
               <Row label="Mode" desc="Demo mode uses safe, local mock responses.">
                 <Badge variant={isDemoMode() ? "warning" : "success"}>{isDemoMode() ? "Demo" : "Live"}</Badge>
               </Row>
-              <Row label="AI provider" desc="Set AI_API_KEY to enable real streaming AI.">
+              <Row
+                label="AI provider"
+                desc="Set GOOGLE_GENERATIVE_AI_API_KEY (Google AI Studio) or AI_API_KEY for OpenAI-compatible APIs."
+              >
                 <Badge variant={aiConfigured ? "success" : "outline"}>
-                  {aiConfigured === null ? "…" : aiConfigured ? "Connected" : "Mock"}
+                  {aiConfigured === null
+                    ? "…"
+                    : aiConfigured
+                      ? aiProvider === "gemini"
+                        ? "Gemini"
+                        : aiProvider === "openai"
+                          ? "OpenAI"
+                          : "Connected"
+                      : "Mock"}
                 </Badge>
               </Row>
               <Row label="Supabase" desc="Set NEXT_PUBLIC_SUPABASE_URL & key to enable cloud storage.">

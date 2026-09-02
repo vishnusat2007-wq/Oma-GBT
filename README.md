@@ -82,17 +82,22 @@ the browser; everything else is server-only.
 | Variable | Where | Purpose |
 | --- | --- | --- |
 | `NEXT_PUBLIC_DEMO_MODE` | `.env.local` | `true` forces demo; `false` forces live; unset = auto. |
-| `AI_API_KEY` | server | Enables real streaming AI (OpenAI-compatible). |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | server | **Recommended.** Gemini key from [Google AI Studio](https://aistudio.google.com/apikey). |
+| `GEMINI_API_KEY` | server | Alias for the Gemini key (also accepted). |
+| `AI_PROVIDER` | server | `auto` (default), `gemini`, or `openai`. |
+| `AI_API_KEY` | server | OpenAI-compatible API key (alternative to Gemini). |
 | `AI_BASE_URL` | server | Optional base URL for an OpenAI-compatible endpoint. |
-| `AI_MODEL` | server | Model name (default `gpt-4o-mini`). |
+| `AI_MODEL` | server | Model name (default `gemini-2.0-flash` with Gemini, else `gpt-4o-mini`). |
 | `NEXT_PUBLIC_SUPABASE_URL` | browser | Supabase project URL. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser | Supabase anon key. |
 | `SUPABASE_SERVICE_ROLE_KEY` | server | Server-only admin key (never exposed). |
 | `PARENT_PIN` | server | Optional default parent PIN. |
 
 **Switching modes:**
-- **Demo → Live AI:** set `AI_API_KEY` (and optionally `AI_BASE_URL`, `AI_MODEL`), then set
-  `NEXT_PUBLIC_DEMO_MODE=false`. The chat route automatically uses the real provider.
+- **Demo → Live AI (Gemini):** create a key at [Google AI Studio](https://aistudio.google.com/apikey), set
+  `GOOGLE_GENERATIVE_AI_API_KEY` and `NEXT_PUBLIC_DEMO_MODE=false`. The chat route uses Gemini automatically.
+- **Demo → Live AI (OpenAI-compatible):** set `AI_API_KEY` (and optionally `AI_BASE_URL`, `AI_MODEL`), then set
+  `NEXT_PUBLIC_DEMO_MODE=false`.
 - **Demo → Live storage:** set the Supabase variables and run the migration (below). With
   Supabase configured and `NEXT_PUBLIC_DEMO_MODE` unset/`false`, the app is in live mode.
 

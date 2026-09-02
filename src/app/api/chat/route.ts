@@ -2,7 +2,7 @@ import { z } from "zod";
 import { getAiProvider } from "@/lib/ai";
 import { checkUserInput } from "@/lib/safety/moderation";
 import { rateLimit } from "@/lib/rate-limit";
-import { isAiConfigured } from "@/lib/env";
+import { isAiConfigured, resolveAiProviderId } from "@/lib/env";
 
 export const runtime = "nodejs";
 
@@ -115,9 +115,11 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
+  const provider = resolveAiProviderId();
   return Response.json({
     status: "ok",
     service: "omgbt-chat",
     aiConfigured: isAiConfigured(),
+    aiProvider: provider,
   });
 }
