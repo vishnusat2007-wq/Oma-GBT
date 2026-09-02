@@ -19,7 +19,6 @@ const serverSchema = z.object({
   AI_MODEL: z.string().min(1).optional(),
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1).optional(),
   GEMINI_API_KEY: z.string().min(1).optional(),
-  GOOGLE_API_KEY: z.string().min(1).optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   PARENT_PIN: z.string().min(4).max(12).optional(),
 });
@@ -43,17 +42,21 @@ if (!serverEnv.success && typeof window === "undefined") {
 
 const parsedServer = serverEnv.success ? serverEnv.data : serverSchema.parse({});
 
-/** Google AI Studio key (https://aistudio.google.com/apikey). */
+/** Default Gemini model (Google AI Studio / @ai-sdk/google). Override with AI_MODEL. */
+export const DEFAULT_GEMINI_MODEL = "gemini-3.7-flash";
+export const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
+
+/**
+ * Google AI Studio key (https://aistudio.google.com/apikey).
+ * Accepts the official SDK name and a common GEMINI_API_KEY alias.
+ * Does not treat generic GOOGLE_API_KEY as Gemini (that key is for other Google APIs).
+ */
 export function getGeminiApiKey(): string | undefined {
-  return (
-    parsedServer.GOOGLE_GENERATIVE_AI_API_KEY ||
-    parsedServer.GEMINI_API_KEY ||
-    parsedServer.GOOGLE_API_KEY
-  );
+  return parsedServer.GOOGLE_GENERATIVE_AI_API_KEY || parsedServer.GEMINI_API_KEY;
 }
 
 function defaultModelForProvider(provider: "gemini" | "openai"): string {
-  return provider === "gemini" ? "gemini-2.0-flash" : "gpt-4o-mini";
+  return provider === "gemini" ? DEFAULT_GEMINI_MODEL : DEFAULT_OPENAI_MODEL;
 }
 
 export function resolveAiProviderId(): "mock" | "gemini" | "openai" {
@@ -94,6 +97,26 @@ export function isSupabaseConfigured(): boolean {
 /** Whether a real AI provider is configured (server-only truth). */
 export function isAiConfigured(): boolean {
   return resolveAiProviderId() !== "mock";
+}
+
+export interface AiRuntimeStatus {
+  status: "ok";
+  service: "omgbt-chat";
+  aiConfigured: boolean;
+  aiProvider: "mock" | "gemini" | "openai";
+  aiModel: string;
+}
+
+/** Safe, secret-free snapshot for /api/chat GET and the parent dashboard. */
+export function getAiRuntimeStatus(): AiRuntimeStatus {
+  const aiProvider = resolveAiProviderId();
+  return {
+    status: "ok",
+    service: "omgbt-chat",
+    aiConfigured: aiProvider !== "mock",
+    aiProvider,
+    aiModel: resolveAiModel(),
+  };
 }
 
 /** The app is in demo mode unless explicitly disabled AND Supabase is configured. */
