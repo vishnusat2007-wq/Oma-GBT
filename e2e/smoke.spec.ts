@@ -63,5 +63,7 @@ test.describe("OmaGBT end-to-end (demo mode)", () => {
     await page.getByLabel("Parent PIN").fill("1234");
     await page.getByRole("button", { name: /Unlock/i }).click();
     await expect(page.getByRole("heading", { name: "Parent dashboard" })).toBeVisible();
+    await expect(page.getByText("AI provider")).toBeVisible();
+    await expect(page.getByText("Mock", { exact: true })).toBeVisible();
   });
 });

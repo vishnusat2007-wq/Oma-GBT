@@ -38,6 +38,7 @@ import {
   stopSpeaking,
 } from "./speech";
 import { playSound } from "@/lib/sound";
+import { providerLabel, useAiStatus } from "./use-ai-status";
 
 const STARTERS = [
   "Tell me a fun fact! 🌟",
@@ -75,6 +76,7 @@ export function ChatView() {
   }, []);
 
   const chat = useCompanionChat(activeId);
+  const aiStatus = useAiStatus();
   const [input, setInput] = React.useState("");
   const [listening, setListening] = React.useState(false);
   const [voiceCallOpen, setVoiceCallOpen] = React.useState(false);
@@ -153,7 +155,11 @@ export function ChatView() {
                 {activeConvo?.title ?? "Chat"}
               </p>
               <p className="text-xs text-muted-foreground">
-                Chatting with {companion.name}
+                {aiStatus
+                  ? aiStatus.configured
+                    ? `Chatting with ${companion.name} · Live ${providerLabel(aiStatus.provider)}`
+                    : `Chatting with ${companion.name} · Demo replies`
+                  : `Chatting with ${companion.name}`}
               </p>
             </div>
           </div>

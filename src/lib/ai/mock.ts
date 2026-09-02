@@ -39,16 +39,16 @@ export function mockReply(req: AiRequest): string {
       text,
     )
   ) {
-    return `I'm feeling great and a little curious today! How are you, ${name}?`;
+    return `I'm great — how are you?`;
   }
   if (/\b(hi|hello|hey|hiya|yo)\b/.test(text)) {
-    const interest = req.context.interests[0];
-    return `Hi ${name}! So happy to see you. 😄 ${
-      interest ? `Want to talk about ${interest}, or should` : "Should"
-    } we play a game or make up a story?`;
+    return `Hi ${name}! So happy to see you. What do you want to talk about?`;
   }
   if (text.includes("your name") || text.includes("who are you")) {
     return `I'm ${companion}, your friendly AI companion! I'm not a real person, but I love chatting, playing, and imagining stories with you. 🤖💜`;
+  }
+  if (/\bsunflower/.test(text)) {
+    return `A sunflower is a tall plant with a big yellow flower that turns to face the sun. 🌻`;
   }
   if (text.includes("space") || text.includes("planet") || text.includes("star")) {
     return `Ooh, space! 🚀 ${pick(SPACE_FACTS)}\n\nWant another space fact, or should we invent a story about an astronaut?`;

@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAppStore } from "@/lib/store/app-store";
 import { isDemoMode, isSupabaseConfigured } from "@/lib/env";
+import { providerLabel, useAiStatus } from "@/features/chat/use-ai-status";
 import { TOOLS } from "@/lib/tools/registry";
 import type { AgeRange, FeaturePermissions } from "@/lib/data/types";
 import { cn } from "@/lib/utils";
@@ -43,22 +44,11 @@ function Row({ label, desc, children }: { label: string; desc?: string; children
 
 export function ParentDashboard() {
   const store = useAppStore();
-  const [aiConfigured, setAiConfigured] = React.useState<boolean | null>(null);
-  const [aiProvider, setAiProvider] = React.useState<string | null>(null);
+  const aiStatus = useAiStatus();
   const [newSite, setNewSite] = React.useState({ title: "", url: "" });
   const [pinForm, setPinForm] = React.useState({ current: "", next: "" });
   const [pinMsg, setPinMsg] = React.useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
-
-  React.useEffect(() => {
-    fetch("/api/chat")
-      .then((r) => r.json())
-      .then((d) => {
-        setAiConfigured(Boolean(d.aiConfigured));
-        setAiProvider(typeof d.aiProvider === "string" ? d.aiProvider : null);
-      })
-      .catch(() => setAiConfigured(false));
-  }, []);
 
   const pendingTools = store.toolRequests.filter((t) => t.status === "pending");
 
@@ -181,24 +171,23 @@ export function ParentDashboard() {
               <CardDescription>Configured with server environment variables. Secrets are never shown here.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Row label="Mode" desc="Demo mode uses safe, local mock responses.">
+              <Row label="Storage" desc="Demo storage is local. Live storage needs Supabase. Gemini can still run with a key.">
                 <Badge variant={isDemoMode() ? "warning" : "success"}>{isDemoMode() ? "Demo" : "Live"}</Badge>
               </Row>
               <Row
                 label="AI provider"
-                desc="Set GOOGLE_GENERATIVE_AI_API_KEY (Google AI Studio) or AI_API_KEY for OpenAI-compatible APIs."
+                desc="Set GOOGLE_GENERATIVE_AI_API_KEY (Google AI Studio) or AI_API_KEY. Status comes from GET /api/chat — no secrets are shown."
               >
-                <Badge variant={aiConfigured ? "success" : "outline"}>
-                  {aiConfigured === null
+                <Badge variant={aiStatus?.configured ? "success" : "outline"}>
+                  {aiStatus === null
                     ? "…"
-                    : aiConfigured
-                      ? aiProvider === "gemini"
-                        ? "Gemini"
-                        : aiProvider === "openai"
-                          ? "OpenAI"
-                          : "Connected"
+                    : aiStatus.configured
+                      ? providerLabel(aiStatus.provider)
                       : "Mock"}
                 </Badge>
+              </Row>
+              <Row label="AI model" desc="Override with AI_MODEL. Default for Gemini is gemini-3.6-flash.">
+                <Badge variant="outline">{aiStatus?.model ?? "…"}</Badge>
               </Row>
               <Row label="Supabase" desc="Set NEXT_PUBLIC_SUPABASE_URL & key to enable cloud storage.">
                 <Badge variant={isSupabaseConfigured() ? "success" : "outline"}>

@@ -2,7 +2,8 @@ import { z } from "zod";
 import { getAiProvider } from "@/lib/ai";
 import { checkUserInput } from "@/lib/safety/moderation";
 import { rateLimit } from "@/lib/rate-limit";
-import { isAiConfigured, resolveAiProviderId } from "@/lib/env";
+import { getAiRuntimeStatus, isAiConfigured } from "@/lib/env";
+import { FRIENDLY_CHAT_ERROR } from "@/lib/ai/stream";
 
 export const runtime = "nodejs";
 
@@ -97,8 +98,13 @@ export async function POST(request: Request) {
   try {
     const provider = getAiProvider();
     const stream = await provider.stream({ messages, context });
+    const runtime = getAiRuntimeStatus();
     return new Response(stream, {
-      headers: { ...SECURITY_HEADERS, "x-omgbt-source": provider.id },
+      headers: {
+        ...SECURITY_HEADERS,
+        "x-omgbt-source": provider.id,
+        "x-omgbt-model": runtime.aiModel,
+      },
     });
   } catch (err) {
     console.error("[omgbt] chat error", {
@@ -107,7 +113,7 @@ export async function POST(request: Request) {
     });
     return new Response(
       streamFromText(
-        "Oops, my thinking cap slipped for a second! 🎩 Let's try that again in a moment.",
+        FRIENDLY_CHAT_ERROR,
       ),
       { headers: { ...SECURITY_HEADERS, "x-omgbt-source": "error" } },
     );
@@ -115,11 +121,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  const provider = resolveAiProviderId();
-  return Response.json({
-    status: "ok",
-    service: "omgbt-chat",
-    aiConfigured: isAiConfigured(),
-    aiProvider: provider,
+  return Response.json(getAiRuntimeStatus(), {
+    headers: { "Cache-Control": "no-store" },
   });
 }
