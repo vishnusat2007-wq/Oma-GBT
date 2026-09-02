@@ -158,7 +158,7 @@ export function ChatView() {
                 {aiStatus
                   ? aiStatus.configured
                     ? `Chatting with ${companion.name} · Live ${providerLabel(aiStatus.provider)}`
-                    : `Chatting with ${companion.name} · Demo replies`
+                    : `Chatting with ${companion.name}`
                   : `Chatting with ${companion.name}`}
               </p>
             </div>
