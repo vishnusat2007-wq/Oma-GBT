@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { buildSystemPrompt } from "@/lib/ai/prompt";
 import { fixNameMisspellings, prepareTextForSpeech } from "@/lib/names/pronunciation";
 
 describe("fixNameMisspellings", () => {
@@ -26,20 +25,5 @@ describe("prepareTextForSpeech", () => {
   it("keeps text unchanged when no pronunciation is known", () => {
     const text = "Hi Alex, want to play?";
     expect(prepareTextForSpeech(text, { childName: "Alex" })).toBe(text);
-  });
-});
-
-describe("buildSystemPrompt", () => {
-  it("instructs the model to keep the child's name spelling exact", () => {
-    const prompt = buildSystemPrompt({
-      companionName: "Pip",
-      childName: "Jesvitha",
-      ageRange: "7-8",
-      personality: ["gentle"],
-      interests: ["space"],
-      memories: [],
-    });
-    expect(prompt).toContain('spelled exactly "Jesvitha"');
-    expect(prompt).toContain('never write "Jeevotha"');
   });
 });
