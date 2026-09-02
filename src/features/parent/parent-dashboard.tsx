@@ -186,7 +186,7 @@ export function ParentDashboard() {
                       : "Mock"}
                 </Badge>
               </Row>
-              <Row label="AI model" desc="Override with AI_MODEL. Default for Gemini is gemini-3.7-flash.">
+              <Row label="AI model" desc="Override with AI_MODEL. Default for Gemini is gemini-3.6-flash.">
                 <Badge variant="outline">{aiStatus?.model ?? "…"}</Badge>
               </Row>
               <Row label="Supabase" desc="Set NEXT_PUBLIC_SUPABASE_URL & key to enable cloud storage.">

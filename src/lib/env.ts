@@ -43,7 +43,7 @@ if (!serverEnv.success && typeof window === "undefined") {
 const parsedServer = serverEnv.success ? serverEnv.data : serverSchema.parse({});
 
 /** Default Gemini model (Google AI Studio / @ai-sdk/google). Override with AI_MODEL. */
-export const DEFAULT_GEMINI_MODEL = "gemini-3.7-flash";
+export const DEFAULT_GEMINI_MODEL = "gemini-3.6-flash";
 export const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
 
 /**

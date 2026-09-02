@@ -39,7 +39,7 @@ describe("GET /api/chat", () => {
       status: "ok",
       aiConfigured: true,
       aiProvider: "gemini",
-      aiModel: "gemini-3.7-flash",
+      aiModel: "gemini-3.6-flash",
     });
     expect(JSON.stringify(json)).not.toContain("secret-must-not-leak");
   });

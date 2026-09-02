@@ -87,7 +87,7 @@ the browser; everything else is server-only.
 | `AI_PROVIDER` | server | `auto` (default), `gemini`, or `openai`. |
 | `AI_API_KEY` | server | OpenAI-compatible API key (alternative to Gemini). |
 | `AI_BASE_URL` | server | Optional base URL for an OpenAI-compatible endpoint. |
-| `AI_MODEL` | server | Model name (default `gemini-3.7-flash` with Gemini, else `gpt-4o-mini`). |
+| `AI_MODEL` | server | Model name (default `gemini-3.6-flash` with Gemini, else `gpt-4o-mini`). |
 | `NEXT_PUBLIC_SUPABASE_URL` | browser | Supabase project URL. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser | Supabase anon key. |
 | `SUPABASE_SERVICE_ROLE_KEY` | server | Server-only admin key (never exposed). |
@@ -113,7 +113,7 @@ There is no Google OAuth callback — the key stays on the server.
    ```bash
    GOOGLE_GENERATIVE_AI_API_KEY=your-key-here
    AI_PROVIDER=auto
-   AI_MODEL=gemini-3.7-flash
+   AI_MODEL=gemini-3.6-flash
    ```
 3. Restart `npm run dev`.
 4. Confirm the server selected Gemini (this JSON never includes the key):
@@ -122,11 +122,11 @@ There is no Google OAuth callback — the key stays on the server.
    ```
    Expected:
    ```json
-   {"status":"ok","service":"omgbt-chat","aiConfigured":true,"aiProvider":"gemini","aiModel":"gemini-3.7-flash"}
+   {"status":"ok","service":"omgbt-chat","aiConfigured":true,"aiProvider":"gemini","aiModel":"gemini-3.6-flash"}
    ```
 5. Sign in, open **Chat** — the subtitle should say `Live Gemini`.
 6. Open **Parents** (PIN `1234` in demo) — **AI provider** should show `Gemini` and **AI model**
-   should show `gemini-3.7-flash`.
+   should show `gemini-3.6-flash`.
 7. Send a chat message. A real Gemini reply streams back; the response includes
    `x-omgbt-source: gemini` (not `mock`).
 
