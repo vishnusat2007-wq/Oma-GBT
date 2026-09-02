@@ -14,7 +14,7 @@ import {
   stopSpeaking,
   parseTranscript,
 } from "./speech";
-import type { CompanionConfig } from "@/lib/data/types";
+import type { CompanionConfig, ChildProfile } from "@/lib/data/types";
 import type { useCompanionChat } from "./use-chat";
 
 type CallStatus = "idle" | "listening" | "thinking" | "speaking";
@@ -22,10 +22,12 @@ type CallStatus = "idle" | "listening" | "thinking" | "speaking";
 export function VoiceCall({
   chat,
   companion,
+  profile,
   onClose,
 }: {
   chat: ReturnType<typeof useCompanionChat>;
   companion: CompanionConfig;
+  profile: ChildProfile;
   onClose: () => void;
 }) {
   const supported = React.useMemo(() => speechSupported(), []);
@@ -36,6 +38,10 @@ export function VoiceCall({
   const [agentCaption, setAgentCaption] = React.useState("");
   const [muted, setMuted] = React.useState(false);
 
+  const nameContext = React.useMemo(
+    () => ({ childName: profile.displayName }),
+    [profile.displayName],
+  );
   const activeRef = React.useRef(true);
   const recRef = React.useRef<ReturnType<typeof getRecognition>>(null);
   const finalRef = React.useRef("");
@@ -138,10 +144,10 @@ export function VoiceCall({
       } else {
         speak(last.content, companionRef.current, () => {
           if (activeRef.current) startRef.current();
-        });
+        }, nameContext);
       }
     }
-  }, [chat.messages, chat.isStreaming, chat.streamingText, muted, canSpeak]);
+  }, [chat.messages, chat.isStreaming, chat.streamingText, muted, canSpeak, nameContext]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const mood: MascotMood =

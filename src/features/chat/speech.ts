@@ -1,6 +1,7 @@
 "use client";
 
 import type { CompanionConfig } from "@/lib/data/types";
+import { prepareTextForSpeech, type NameContext } from "@/lib/names/pronunciation";
 
 interface SpeechRecognitionResultLike {
   0: { transcript: string };
@@ -102,17 +103,21 @@ export function speak(
   text: string,
   companion: CompanionConfig,
   onEnd?: () => void,
+  nameContext?: NameContext,
 ) {
   if (!ttsSupported()) {
     onEnd?.();
     return;
   }
   window.speechSynthesis.cancel();
-  const clean = text
-    .replace(/[*_#`>~]/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 600);
+  const clean = prepareTextForSpeech(
+    text
+      .replace(/[*_#`>~]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 600),
+    nameContext ?? {},
+  );
   if (!clean) {
     onEnd?.();
     return;
