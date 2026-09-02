@@ -11,7 +11,7 @@ export interface AiClientStatus {
 export function providerLabel(provider: string): string {
   if (provider === "gemini") return "Gemini";
   if (provider === "openai") return "OpenAI";
-  if (provider === "mock") return "Demo replies";
+  if (provider === "mock") return "Local companion";
   return "Connected";
 }
 

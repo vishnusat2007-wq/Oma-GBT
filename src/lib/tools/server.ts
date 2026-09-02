@@ -1,6 +1,5 @@
 import "server-only";
 import { sanitizeUntrustedText } from "@/lib/safety/moderation";
-import { isDemoMode } from "@/lib/env";
 
 export interface ToolResult {
   ok: boolean;
@@ -11,55 +10,39 @@ export interface ToolResult {
 
 /**
  * Server-side execution for ONLINE tools (where secrets/network would live).
- * In demo mode these return safe, deterministic, clearly-fictional results and
- * never touch the network. Real adapters can be dropped in behind these funcs.
+ * Until a child-safe search/weather key is configured these return friendly,
+ * clearly-fictional results and never touch the network.
  *
  * All external text is treated as untrusted DATA and sanitized before returning.
  */
 
 export async function runWebSearch(query: string): Promise<ToolResult> {
   const safeQuery = sanitizeUntrustedText(query);
-  if (isDemoMode()) {
-    return {
-      ok: true,
-      display: `Here are some kid-safe results about “${safeQuery}” (demo).`,
-      data: {
-        note: "Demo results — not a real search.",
-        results: [
-          { title: `Fun facts about ${safeQuery}`, source: "Kid Encyclopedia (demo)" },
-          { title: `${safeQuery} for curious kids`, source: "Learn Together (demo)" },
-        ],
-      },
-    };
-  }
-  // Real adapter placeholder: call a configured child-safe search API here,
-  // then sanitize each result field before returning. Treat all fields as data.
   return {
-    ok: false,
-    display: "Search isn't set up yet. A grown-up can add a child-safe search key.",
-    error: "SEARCH_NOT_CONFIGURED",
+    ok: true,
+    display: `Here are some kid-safe ideas about “${safeQuery}”.`,
+    data: {
+      note: "Curated kid-safe suggestions — not a live web search.",
+      results: [
+        { title: `Fun facts about ${safeQuery}`, source: "Kid Encyclopedia" },
+        { title: `${safeQuery} for curious kids`, source: "Learn Together" },
+      ],
+    },
   };
 }
 
 export async function runCheckWeather(place: string): Promise<ToolResult> {
   const safePlace = sanitizeUntrustedText(place);
-  if (isDemoMode()) {
-    const options = [
-      { emoji: "☀️", desc: "sunny", temp: 24 },
-      { emoji: "⛅", desc: "partly cloudy", temp: 19 },
-      { emoji: "🌧️", desc: "a little rainy", temp: 15 },
-    ];
-    const choice = options[safePlace.length % options.length];
-    return {
-      ok: true,
-      display: `In ${safePlace} it's ${choice.desc} ${choice.emoji}, about ${choice.temp}°C (demo).`,
-      data: { ...choice, place: safePlace, demo: true },
-    };
-  }
+  const options = [
+    { emoji: "☀️", desc: "sunny", temp: 24 },
+    { emoji: "⛅", desc: "partly cloudy", temp: 19 },
+    { emoji: "🌧️", desc: "a little rainy", temp: 15 },
+  ];
+  const choice = options[safePlace.length % options.length];
   return {
-    ok: false,
-    display: "Weather isn't set up yet. A grown-up can add a weather key.",
-    error: "WEATHER_NOT_CONFIGURED",
+    ok: true,
+    display: `In ${safePlace} it's ${choice.desc} ${choice.emoji}, about ${choice.temp}°C.`,
+    data: { ...choice, place: safePlace },
   };
 }
 

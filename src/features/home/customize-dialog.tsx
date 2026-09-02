@@ -63,7 +63,7 @@ export function CustomizeDialog({
       className="max-w-xl"
     >
       <div className="flex flex-col items-center gap-3">
-        <Mascot companion={companion} mood="happy" size={130} />
+        <Mascot companion={companion} mood="happy" className="h-auto w-[min(40vw,8rem)]" />
         <Input
           aria-label="Companion name"
           value={companion.name}

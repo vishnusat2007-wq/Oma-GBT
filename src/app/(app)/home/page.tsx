@@ -38,7 +38,6 @@ export default function HomePage() {
   const profile = useAppStore((s) => s.profile);
   const companion = useAppStore((s) => s.companion);
   const streak = useAppStore((s) => s.streakDays);
-  const demoMode = useAppStore((s) => s.demoMode);
   const permissions = useAppStore((s) => s.permissions);
   const conversations = useAppStore((s) => s.conversations);
   const unlockedAchievements = useAppStore((s) => s.unlockedAchievements);
@@ -58,7 +57,7 @@ export default function HomePage() {
   return (
     <div className="space-y-5">
       {/* Hero */}
-      <Card className="overflow-hidden border-0 bg-card/80 backdrop-blur">
+      <Card className="overflow-visible border-0 bg-card/80 backdrop-blur">
         <CardContent className="flex flex-col items-center gap-4 p-6 sm:flex-row sm:items-center sm:gap-6">
           <button
             onClick={() => {
@@ -68,13 +67,12 @@ export default function HomePage() {
               setTimeout(() => setMood("happy"), 1200);
             }}
             aria-label={`Give ${companion.name} a boop`}
-            className="shrink-0"
+            className="mx-auto w-[min(42vw,9.5rem)] shrink-0 overflow-visible sm:mx-0 sm:w-[150px]"
           >
-            <Mascot companion={companion} mood={mood} size={150} />
+            <Mascot companion={companion} mood={mood} className="h-auto w-full" />
           </button>
-          <div className="text-center sm:text-left">
+          <div className="min-w-0 text-center sm:text-left">
             <div className="mb-1 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-              {demoMode && <Badge variant="warning">Demo mode</Badge>}
               <Badge variant="success">
                 <Flame className="h-3 w-3" /> {streak}-day streak
               </Badge>

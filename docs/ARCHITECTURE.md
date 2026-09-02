@@ -9,12 +9,10 @@ magic, stories, learn, parent) owns its components and logic.
 ```
 Browser (React 19, Client Components)
   │
-  ├─ Zustand store  ── localStorage (demo data layer, single source of truth)
+  ├─ Zustand store  ── localStorage cache + /api/sync → Supabase (cloud memory)
   │
   ├─ /api/chat      ── safety gate → AI provider (mock | Gemini | OpenAI-compatible) → text stream
   └─ /api/tools     ── Zod validation → parent-approval gate → server tool execution
-                                                    │
-                                          Supabase (optional: auth, DB, RLS)
 ```
 
 ## Rendering strategy
@@ -33,13 +31,14 @@ Browser (React 19, Client Components)
 | Area | Location | Notes |
 | --- | --- | --- |
 | Domain types | `src/lib/data/types.ts` | All entity shapes. |
-| Data layer (demo) | `src/lib/store/app-store.tsx` | Zustand + `persist`. The runtime source of truth. |
-| Seed data | `src/lib/demo/seed.ts` | Fictional child, conversations, achievements. |
+| Data layer | `src/lib/store/app-store.tsx` | Zustand + `persist` (device cache). |
+| Cloud memory | `src/lib/cloud/*`, `/api/sync` | Supabase RPCs; memories also stored in `cloud_memories`. |
+| Seed data | `src/lib/demo/seed.ts` | Fresh household defaults (Jesvitha + Pip, empty chats). |
 | AI abstraction | `src/lib/ai/*` | `AiProvider` interface; `mock`, **Gemini (Google AI Studio)**, and `openai` adapters; `getAiProvider()` prefers Gemini when `GOOGLE_GENERATIVE_AI_API_KEY` or `GEMINI_API_KEY` is set. |
 | Safety | `src/lib/safety/moderation.ts` | Input/output checks + untrusted-text sanitization. |
 | Tools | `src/lib/tools/*` | Zod schemas, registry, intent detection (`registry.ts`), server execution (`server.ts`). |
-| Env | `src/lib/env.ts` | Zod-validated env; `isDemoMode` / `isAiConfigured` / `isSupabaseConfigured`. |
-| Supabase | `src/lib/supabase/*` | Browser & server clients (null when unconfigured). |
+| Env | `src/lib/env.ts` | Zod-validated env; `isAiConfigured` / `isSupabaseConfigured`. |
+| Supabase | `src/lib/supabase/*`, `src/lib/cloud/server.ts` | Anon key + household-secret RPCs (tables are RLS-locked). |
 
 ## Chat data flow
 
@@ -65,9 +64,11 @@ log**. The registry is data-driven so new capabilities can be added later.
 
 ## State & persistence
 
-Demo mode persists to `localStorage` under `omgbt.appdata.v1`. Production persistence uses
-Supabase with Row Level Security (see `supabase/migrations/0001_init.sql`); the schema
-mirrors the domain types and cascades deletes from parent → child → content.
+Zustand still caches the household on the device (`omagbt.appdata.v3`). After sign-in,
+`CloudSync` loads `/api/sync` (Supabase `family_snapshots` + `cloud_memories`) and
+debounce-saves later changes. Parent **Delete all data** wipes both the cloud snapshot
+and localStorage, then restores empty defaults — it does not reseed fake demo chats.
+See `supabase/migrations/0002_cloud_family_memory.sql`.
 
 ## Accessibility & UX
 

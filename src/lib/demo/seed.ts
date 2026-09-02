@@ -19,7 +19,6 @@ import type {
 } from "@/lib/data/types";
 
 export interface AppData {
-  demoMode: boolean;
   profile: ChildProfile;
   companion: CompanionConfig;
   conversations: Conversation[];
@@ -41,25 +40,20 @@ export interface AppData {
   lastVisit: string | null;
 }
 
-const now = new Date();
-const iso = (daysAgo = 0) =>
-  new Date(now.getTime() - daysAgo * 86400000).toISOString();
-
 /**
- * DEMO_PIN is a well-known placeholder for local demo mode only. In live mode the
- * parent sets a real PIN which is never committed. This is not a secret.
+ * Default parent PIN for a fresh household. Parents should change this in the
+ * dashboard. It is not a secret and is never shown in the child-facing UI.
  */
 export const DEMO_PIN = "1234";
 
-export function createDemoData(): AppData {
-  const conversationId = "conv_demo_1";
+export function createInitialData(): AppData {
+  const now = new Date().toISOString();
   return {
-    demoMode: true,
     profile: {
-      id: "child_demo",
+      id: "child_jesvitha",
       displayName: "Jesvitha",
       ageRange: "7-8",
-      createdAt: iso(20),
+      createdAt: now,
     },
     companion: {
       name: "Pip",
@@ -71,85 +65,14 @@ export function createDemoData(): AppData {
       voicePitch: 1.05,
       voiceRate: 1,
     },
-    conversations: [
-      {
-        id: conversationId,
-        title: "Space adventures",
-        createdAt: iso(2),
-        updatedAt: iso(0),
-        archived: false,
-      },
-      {
-        id: "conv_demo_2",
-        title: "Dinosaur facts",
-        createdAt: iso(5),
-        updatedAt: iso(4),
-        archived: false,
-      },
-    ],
-    messages: [
-      {
-        id: "msg_1",
-        conversationId,
-        role: "assistant",
-        content:
-          "Hi Jesvitha! I'm Pip. 🌟 Want to hear a fun fact about space, or should we make up a story together?",
-        kind: "text",
-        createdAt: iso(2),
-        aiGenerated: true,
-      },
-      {
-        id: "msg_2",
-        conversationId,
-        role: "user",
-        content: "Tell me a space fact!",
-        kind: "text",
-        createdAt: iso(2),
-      },
-      {
-        id: "msg_3",
-        conversationId,
-        role: "assistant",
-        content:
-          "Okay! 🚀 A day on Venus is longer than its whole year — it spins *super* slowly. Isn't that wild? Want another one?",
-        kind: "text",
-        createdAt: iso(2),
-        aiGenerated: true,
-      },
-    ],
-    memories: [
-      { id: "mem_1", key: "Favorite color", value: "purple", category: "favorite", createdAt: iso(18), source: "child" },
-      { id: "mem_2", key: "Loves", value: "dinosaurs and space", category: "hobby", createdAt: iso(15), source: "companion" },
-      { id: "mem_3", key: "Favorite character", value: "a friendly dragon named Ember", category: "character", createdAt: iso(9), source: "child" },
-      { id: "mem_4", key: "Learning goal", value: "practicing times tables", category: "learning", createdAt: iso(6), source: "child" },
-    ],
-    stories: [
-      {
-        id: "story_1",
-        title: "The Dragon Who Loved Stars",
-        characters: ["Ember the dragon", "Jesvitha"],
-        setting: "a mountain that touches the sky",
-        mood: "cozy",
-        pages: [
-          { id: "p1", text: "Ember the dragon curled up on the tallest mountain, counting the stars one by one." },
-          { id: "p2", text: "Suddenly, a shooting star zoomed past! Ember and Jesvitha decided to chase it together.", choiceTaken: "Chase the star" },
-        ],
-        createdAt: iso(7),
-        favorite: true,
-        complete: false,
-      },
-    ],
-    games: [
-      { id: "gs_1", game: "tic-tac-toe", score: 1, difficulty: "medium", result: "win", createdAt: iso(1) },
-      { id: "gs_2", game: "trivia", score: 4, difficulty: "easy", result: "complete", createdAt: iso(3) },
-    ],
-    unlockedAchievements: ["first-hello", "chatterbox", "tic-tac-champ", "quiz-whiz"],
-    reminders: [
-      { id: "rem_1", title: "Read a chapter before bed", when: "Tonight, 8:00 PM", createdAt: iso(1), done: false },
-    ],
-    notes: [
-      { id: "note_1", title: "Story idea", body: "A dragon and a robot become best friends.", createdAt: iso(4) },
-    ],
+    conversations: [],
+    messages: [],
+    memories: [],
+    stories: [],
+    games: [],
+    unlockedAchievements: [],
+    reminders: [],
+    notes: [],
     permissions: {
       chat: true,
       arcade: true,
@@ -163,9 +86,7 @@ export function createDemoData(): AppData {
       { id: "site_2", title: "National Geographic Kids", url: "https://kids.nationalgeographic.com/" },
     ],
     toolRequests: [],
-    toolAudit: [
-      { id: "aud_1", tool: "save_note", summary: "Saved note: Story idea", outcome: "completed", requiredApproval: false, at: iso(4) },
-    ],
+    toolAudit: [],
     safetyEvents: [],
     preferences: {
       soundOn: true,
@@ -180,11 +101,12 @@ export function createDemoData(): AppData {
       pin: DEMO_PIN,
       emergencyOnlineDisable: false,
     },
-    streakDays: 3,
-    lastVisit: iso(0),
+    streakDays: 0,
+    lastVisit: null,
   };
 }
 
-export const DEMO_ACHIEVEMENTS = buildAchievements(
-  createDemoData().unlockedAchievements,
-);
+/** @deprecated Use createInitialData — kept so older imports keep typechecking. */
+export const createDemoData = createInitialData;
+
+export const DEMO_ACHIEVEMENTS = buildAchievements([]);

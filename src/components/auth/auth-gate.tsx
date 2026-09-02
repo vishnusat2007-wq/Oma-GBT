@@ -42,6 +42,16 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
     const ok = await verifyCredentials(username, password);
     if (ok) {
       setSignedIn(true);
+      try {
+        await fetch("/api/session", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: username.trim(), password }),
+        });
+      } catch {
+        // Local session still works; cloud sync will retry after a refresh.
+      }
       setMood("excited");
       celebrate("big");
       setTimeout(onSuccess, 500);
@@ -64,7 +74,9 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
       >
         <Card className="border-0 bg-card/85 shadow-2xl backdrop-blur">
           <CardContent className="flex flex-col items-center gap-4 p-7 text-center">
-            <Mascot companion={LOGIN_MASCOT} mood={mood} size={130} />
+            <div className="mx-auto w-[min(42vw,8.5rem)] overflow-visible">
+              <Mascot companion={LOGIN_MASCOT} mood={mood} className="h-auto w-full" />
+            </div>
             <div>
               <h1 className="font-display text-3xl font-extrabold">OmaGBT</h1>
               <p className="mt-1 text-sm text-muted-foreground">
