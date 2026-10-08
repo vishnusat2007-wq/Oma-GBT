@@ -5,9 +5,8 @@
  *
  * The password is never stored in the repo. We keep only a SHA-256 hash of the
  * `username:password` pair and compare against it in the browser. This is a
- * friendly access gate for a personal device (client-side by design, matching the
- * demo-first architecture). For internet-facing deployments, back this with a
- * real identity provider (Supabase Auth clients are already included).
+ * friendly access gate for a personal device. A successful login also asks
+ * `/api/session` to set an httpOnly cookie so Convex sync stays on the server.
  *
  * To change the credentials, run:
  *   node -e "const c=require('crypto');console.log(c.createHash('sha256').update('USER:PASS').digest('hex'))"

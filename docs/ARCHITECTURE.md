@@ -14,7 +14,7 @@ Browser (React 19, Client Components)
   ├─ /api/chat      ── safety gate → AI provider (mock | Gemini | OpenAI-compatible) → text stream
   └─ /api/tools     ── Zod validation → parent-approval gate → server tool execution
                                                     │
-                                          Supabase (optional: auth, DB, RLS)
+                                          Convex (optional: household snapshot + memories)
 ```
 
 ## Rendering strategy
@@ -38,8 +38,8 @@ Browser (React 19, Client Components)
 | AI abstraction | `src/lib/ai/*` | `AiProvider` interface; `mock`, **Gemini (Google AI Studio)**, and `openai` adapters; `getAiProvider()` prefers Gemini when `GOOGLE_GENERATIVE_AI_API_KEY` or `GEMINI_API_KEY` is set. |
 | Safety | `src/lib/safety/moderation.ts` | Input/output checks + untrusted-text sanitization. |
 | Tools | `src/lib/tools/*` | Zod schemas, registry, intent detection (`registry.ts`), server execution (`server.ts`). |
-| Env | `src/lib/env.ts` | Zod-validated env; `isDemoMode` / `isAiConfigured` / `isSupabaseConfigured`. |
-| Supabase | `src/lib/supabase/*` | Browser & server clients (null when unconfigured). |
+| Env | `src/lib/env.ts` | Zod-validated env; `isAiConfigured` / Gemini model selection. |
+| Cloud memory | `convex/household.ts`, `src/lib/cloud/*` | Convex snapshot + memory rows. The browser talks to `/api/sync`, which checks a household secret. |
 
 ## Chat data flow
 
@@ -65,9 +65,11 @@ log**. The registry is data-driven so new capabilities can be added later.
 
 ## State & persistence
 
-Demo mode persists to `localStorage` under `omgbt.appdata.v1`. Production persistence uses
-Supabase with Row Level Security (see `supabase/migrations/0001_init.sql`); the schema
-mirrors the domain types and cascades deletes from parent → child → content.
+The device cache is `localStorage` under `omagbt.appdata.v3`. When Convex is configured,
+`CloudSync` loads and saves that same snapshot through `/api/sync`. Convex stores one
+household document plus a `memories` row per remembered fact. Sign-in is the existing
+username and password; a successful login also sets an httpOnly cookie that `/api/sync`
+requires. Convex functions reject calls that do not include `OMAGBT_HOUSEHOLD_SECRET`.
 
 ## Accessibility & UX
 

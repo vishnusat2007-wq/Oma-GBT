@@ -8,8 +8,9 @@ dashboard and a dedicated safety layer.
 The app opens with a friendly **sign-in screen** (username + password), so it stays
 private to Jesvitha.
 
-> OmaGBT runs **fully in demo mode with zero configuration** (local storage + deterministic
-> mock AI). Add an AI key and/or Supabase to switch to live mode.
+> OmaGBT runs **fully offline with zero configuration** (this device + deterministic
+> mock AI). Add a Gemini key for live chat, and Convex for memory that follows Jesvitha
+> across devices.
 
 ---
 
@@ -40,7 +41,7 @@ private to Jesvitha.
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Framer Motion ·
 Zustand · Vercel AI SDK (`ai`) with **Google Gemini** (recommended) or an OpenAI-compatible
-provider · Supabase (auth, DB, RLS) · Zod · Vitest (unit) · Playwright (e2e).
+provider · Convex (household memory) · Zod · Vitest (unit) · Playwright (e2e).
 
 ---
 
@@ -70,9 +71,10 @@ is kept (`src/lib/auth.ts`). To change it, generate a new hash and set it via
 node -e "const c=require('crypto');console.log(c.createHash('sha256').update('NEWUSER:NEWPASS').digest('hex'))"
 ```
 
-Sign-in is a client-side gate suited to a personal device (matching the demo-first design).
-For an internet-facing deployment, use a real identity provider — the Supabase Auth clients
-are already included.
+Sign-in is a household gate for this one private app. A correct login also sets an
+httpOnly cookie (`POST /api/session`) so cloud sync can run on the server. Convex
+functions additionally require `OMAGBT_HOUSEHOLD_SECRET`, which never reaches the browser.
+Supabase Auth was never called by the app, so it was not replaced with Convex Auth.
 
 ## 🔧 Configuration & modes
 
@@ -81,27 +83,26 @@ the browser; everything else is server-only.
 
 | Variable | Where | Purpose |
 | --- | --- | --- |
-| `NEXT_PUBLIC_DEMO_MODE` | `.env.local` | `true` forces demo; `false` forces live; unset = auto. |
 | `GOOGLE_GENERATIVE_AI_API_KEY` | server | **Recommended.** Gemini key from [Google AI Studio](https://aistudio.google.com/apikey). |
 | `GEMINI_API_KEY` | server | Alias for the Gemini key (also accepted). |
 | `AI_PROVIDER` | server | `auto` (default), `gemini`, or `openai`. |
 | `AI_API_KEY` | server | OpenAI-compatible API key (alternative to Gemini). |
 | `AI_BASE_URL` | server | Optional base URL for an OpenAI-compatible endpoint. |
 | `AI_MODEL` | server | Model name (default `gemini-3.6-flash` with Gemini, else `gpt-4o-mini`). |
-| `NEXT_PUBLIC_SUPABASE_URL` | browser | Supabase project URL. |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser | Supabase anon key. |
-| `SUPABASE_SERVICE_ROLE_KEY` | server | Server-only admin key (never exposed). |
+| `CONVEX_DEPLOYMENT` | CLI | Which Convex deployment the CLI targets (`.env.local` only). |
+| `NEXT_PUBLIC_CONVEX_URL` | build / server | Convex deployment URL (`https://<name>.convex.cloud`). |
+| `CONVEX_DEPLOY_KEY` | Vercel | Deploy key so `npx convex deploy` can push functions. |
+| `OMAGBT_HOUSEHOLD_SECRET` | server + Convex | Shared secret for load/save/wipe. Already set on the oma-gbt Vercel project. |
 | `PARENT_PIN` | server | Optional default parent PIN. |
 
 **Switching modes:**
-- **Demo → Live AI (Gemini):** create a key at [Google AI Studio](https://aistudio.google.com/apikey), set
+- **Live AI (Gemini):** create a key at [Google AI Studio](https://aistudio.google.com/apikey), set
   `GOOGLE_GENERATIVE_AI_API_KEY` (or `GEMINI_API_KEY`). Chat uses Gemini automatically when
-  `AI_PROVIDER` is `auto` or `gemini`. Set `NEXT_PUBLIC_DEMO_MODE=false` if you also want
-  live storage/tools (Gemini works even while storage stays local).
-- **Demo → Live AI (OpenAI-compatible):** set `AI_API_KEY` (and optionally `AI_BASE_URL`, `AI_MODEL`), then set
-  `NEXT_PUBLIC_DEMO_MODE=false`.
-- **Demo → Live storage:** set the Supabase variables and run the migration (below). With
-  Supabase configured and `NEXT_PUBLIC_DEMO_MODE` unset/`false`, the app is in live mode.
+  `AI_PROVIDER` is `auto` or `gemini`. Gemini works even while memory stays on this device.
+- **Live AI (OpenAI-compatible):** set `AI_API_KEY` (and optionally `AI_BASE_URL`, `AI_MODEL`).
+- **Cloud memory:** create a Convex project for Oma GBT (not kiwi-chat), set
+  `NEXT_PUBLIC_CONVEX_URL` and `OMAGBT_HOUSEHOLD_SECRET`, and set that same secret on the
+  Convex deployment. See below.
 
 ### Google Gemini setup & verification
 
@@ -135,30 +136,59 @@ On Vercel, add the same variables under **Project → Settings → Environment V
 
 A generic `GOOGLE_API_KEY` (Maps, Custom Search, etc.) is **not** treated as a Gemini key.
 
-The AI provider and storage are behind clean abstractions (`src/lib/ai`, `src/lib/supabase`)
+The AI provider and storage are behind clean abstractions (`src/lib/ai`, `src/lib/cloud`)
 so they can be swapped without touching feature code.
 
-## 🗄️ Supabase setup
+## 🗄️ Convex setup
 
-1. Create a Supabase project and copy the URL + anon key into `.env.local`.
-2. Apply the schema (RLS, indexes, foreign keys, cascade deletes):
+Oma GBT keeps one household (`jesvitha`) in its own Convex project. Do not point it at
+the kiwi-chat deployment.
+
+1. Log in as the Convex account that owns team `vishnu-satyavarapu`:
    ```bash
-   supabase db push          # with the Supabase CLI, or
-   psql "$DATABASE_URL" -f supabase/migrations/0001_init.sql
+   npx convex login
    ```
-3. (Optional) Seed example rows after creating an auth user: edit the parent UUID in
-   `supabase/seed.sql`, then run it.
+2. Create a project and a production deployment (names can be `oma-gbt`):
+   ```bash
+   npx convex project create oma-gbt --team vishnu-satyavarapu
+   npx convex deployment create prod --type prod --default --select
+   ```
+3. Push the functions and write the URL into `.env.local`:
+   ```bash
+   npx convex dev --once
+   ```
+4. Generate a household secret if you do not already have one (`openssl rand -hex 32`).
+   The oma-gbt Vercel project already stores `OMAGBT_HOUSEHOLD_SECRET`. Use that same
+   value in both places:
+   ```bash
+   npx convex env set OMAGBT_HOUSEHOLD_SECRET "<the vercel value>"
+   ```
+   Also put it in `.env.local` as `OMAGBT_HOUSEHOLD_SECRET`.
+5. Create a deploy key for Vercel (Convex dashboard → Project Settings → Deploy Keys,
+   or `npx convex deployment token create vercel-prod`).
 
-Every table has **Row Level Security** so a parent can only access rows belonging to their
-own child profiles. See `supabase/migrations/0001_init.sql`.
+A brand-new deployment is empty. The first signed-in visit uploads Jesvitha's profile,
+Pip, and the parent website allowlist. It does not upload the old fake demo chats.
 
-## ☁️ Deployment (Vercel + Supabase)
+The paused Supabase project `omagbt` (`wudvornitqucrahtlzgo`) did not answer, so its
+rows were not copied. Supabase Auth, Storage, Realtime, and Edge Functions were not
+used by the running app.
 
-1. Push this repo to GitHub and import it into Vercel.
-2. Add the environment variables from the table above in **Vercel → Project → Settings →
-   Environment Variables** (set `NEXT_PUBLIC_DEMO_MODE=false` for production).
-3. Provision Supabase and run the migration against your production database.
-4. Deploy. The app builds with `next build` and needs no extra configuration.
+## ☁️ Deployment (Vercel + Convex)
+
+1. In **Vercel → oma-gbt → Settings → Environment Variables**, set:
+   - `CONVEX_DEPLOY_KEY` — production deploy key (and a preview deploy key on Preview, if you use preview deployments).
+   - `NEXT_PUBLIC_CONVEX_URL` — `https://<deployment>.convex.cloud` from the Convex dashboard.
+   - `OMAGBT_HOUSEHOLD_SECRET` — already set; copy that exact value into the Convex deployment env as well.
+   - `CONVEX_DEPLOYMENT` — optional on Vercel. The CLI uses it locally (for example `prod:oma-gbt`). Production deploys select the deployment from `CONVEX_DEPLOY_KEY`.
+2. Build command (already in `vercel.json`):
+   ```bash
+   npx convex deploy --cmd 'npm run build'
+   ```
+   That pushes `convex/` and injects `NEXT_PUBLIC_CONVEX_URL` for the Next.js build.
+3. Keep the existing Gemini variables. Remove `NEXT_PUBLIC_SUPABASE_URL` and
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY` after the Convex deploy is healthy. They are unused.
+4. Redeploy. Sign in, send a chat, then open Parents and confirm **Cloud memory** says Connected.
 
 ---
 
@@ -180,10 +210,8 @@ The first Playwright run needs browsers: `npx playwright install chromium`.
 
 ## ⚠️ Known limitations
 
-- **Demo-first data layer.** The default experience persists to the browser (Zustand +
-  localStorage). Supabase adapters, typed schema, and RLS migrations are included and the
-  clients are wired; fully routing every store write through Supabase is the documented next
-  step for production.
+- **Device cache plus Convex.** Without Convex env vars, chats stay in this browser
+  (`omagbt.appdata.v3`). With Convex configured, the same snapshot syncs after sign-in.
 - **AI output moderation** relies on a strong safety system prompt plus **input-side**
   moderation. A streaming output filter is stubbed for future work.
 - **Rate limiting** is in-memory (fine for a single-child, single-instance deployment). For
@@ -203,8 +231,8 @@ src/
   lib/
     ai/                     # provider abstraction (mock + Gemini + OpenAI-compatible)
     data/ demo/ store/      # domain types, seed, Zustand store (demo data layer)
-    safety/ tools/ supabase/ env.ts
-supabase/migrations/        # SQL schema + RLS
+    safety/ tools/ cloud/ env.ts
+convex/                     # Convex schema, queries, and mutations
 e2e/                        # Playwright tests
 ```
 
