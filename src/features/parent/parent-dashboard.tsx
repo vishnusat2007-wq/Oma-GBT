@@ -22,7 +22,6 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAppStore } from "@/lib/store/app-store";
-import { isDemoMode, isSupabaseConfigured } from "@/lib/env";
 import { providerLabel, useAiStatus } from "@/features/chat/use-ai-status";
 import { TOOLS } from "@/lib/tools/registry";
 import type { AgeRange, FeaturePermissions } from "@/lib/data/types";
@@ -49,6 +48,16 @@ export function ParentDashboard() {
   const [pinForm, setPinForm] = React.useState({ current: "", next: "" });
   const [pinMsg, setPinMsg] = React.useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [deleteMsg, setDeleteMsg] = React.useState<string | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
+  const [cloudConnected, setCloudConnected] = React.useState<boolean | null>(null);
+
+  React.useEffect(() => {
+    fetch("/api/sync", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : { cloud: false }))
+      .then((d) => setCloudConnected(Boolean(d.cloud)))
+      .catch(() => setCloudConnected(false));
+  }, []);
 
   const pendingTools = store.toolRequests.filter((t) => t.status === "pending");
 
@@ -171,8 +180,13 @@ export function ParentDashboard() {
               <CardDescription>Configured with server environment variables. Secrets are never shown here.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Row label="Storage" desc="Demo storage is local. Live storage needs Supabase. Gemini can still run with a key.">
-                <Badge variant={isDemoMode() ? "warning" : "success"}>{isDemoMode() ? "Demo" : "Live"}</Badge>
+              <Row label="Cloud memory" desc="Chats, memories, and settings sync through Convex so they follow Jesvitha across devices.">
+                <Badge variant={cloudConnected ? "success" : "outline"}>
+                  {cloudConnected === null ? "…" : cloudConnected ? "Connected" : "This device only"}
+                </Badge>
+              </Row>
+              <Row label="Remembered items" desc="Things Pip has saved from chats. Parents can review them on the Memory tab.">
+                <Badge variant="secondary">{store.memories.length}</Badge>
               </Row>
               <Row
                 label="AI provider"
@@ -188,11 +202,6 @@ export function ParentDashboard() {
               </Row>
               <Row label="AI model" desc="Override with AI_MODEL. Default for Gemini is gemini-3.6-flash.">
                 <Badge variant="outline">{aiStatus?.model ?? "…"}</Badge>
-              </Row>
-              <Row label="Supabase" desc="Set NEXT_PUBLIC_SUPABASE_URL & key to enable cloud storage.">
-                <Badge variant={isSupabaseConfigured() ? "success" : "outline"}>
-                  {isSupabaseConfigured() ? "Connected" : "Local only"}
-                </Badge>
               </Row>
             </CardContent>
           </Card>
@@ -506,25 +515,37 @@ export function ParentDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Data controls</CardTitle>
-              <CardDescription>Export or permanently delete all of {store.profile.displayName}&apos;s data.</CardDescription>
+              <CardDescription>Export or permanently delete all of {store.profile.displayName}&apos;s data from this device and Convex.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
+            <CardContent className="flex flex-col gap-3">
+              <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={exportData}>
                 <Download className="h-4 w-4" /> Export data (JSON)
               </Button>
               {confirmDelete ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-destructive">Are you sure?</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-bold text-destructive">This cannot be undone. Wipe chats, memories, and stories everywhere?</span>
                   <Button
                     variant="destructive"
+                    disabled={deleting}
                     onClick={() => {
-                      store.deleteAllData();
-                      setConfirmDelete(false);
+                      setDeleting(true);
+                      setDeleteMsg(null);
+                      void store
+                        .deleteAllData()
+                        .then(() => {
+                          setConfirmDelete(false);
+                          setDeleteMsg("All of her data has been removed from this device and the cloud.");
+                        })
+                        .catch(() => {
+                          setDeleteMsg("Cloud delete failed. Check the connection and try again — local data was still reset.");
+                        })
+                        .finally(() => setDeleting(false));
                     }}
                   >
-                    Yes, delete everything
+                    {deleting ? "Deleting…" : "Yes, delete everything"}
                   </Button>
-                  <Button variant="ghost" onClick={() => setConfirmDelete(false)}>
+                  <Button variant="ghost" disabled={deleting} onClick={() => setConfirmDelete(false)}>
                     Cancel
                   </Button>
                 </div>
@@ -533,6 +554,8 @@ export function ParentDashboard() {
                   <Trash2 className="h-4 w-4" /> Delete all data
                 </Button>
               )}
+              </div>
+              {deleteMsg && <p className="text-sm font-bold">{deleteMsg}</p>}
             </CardContent>
           </Card>
         </TabsContent>

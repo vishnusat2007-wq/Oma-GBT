@@ -21,7 +21,7 @@ test.describe("OmaGBT sign-in", () => {
   });
 });
 
-test.describe("OmaGBT end-to-end (demo mode)", () => {
+test.describe("OmaGBT end-to-end", () => {
   // Pre-authenticate so feature tests skip the sign-in screen.
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
@@ -34,7 +34,7 @@ test.describe("OmaGBT end-to-end (demo mode)", () => {
     await expect(page).toHaveURL(/\/home/);
     await expect(page.getByRole("heading", { level: 1 })).toContainText(/Jesvitha/i);
     await expect(page.getByRole("link", { name: /Chat/i }).first()).toBeVisible();
-    await expect(page.getByText(/Demo mode/i).first()).toBeVisible();
+    await expect(page.getByText(/Demo mode/i)).toHaveCount(0);
   });
 
   test("chat: sending a message returns a companion reply", async ({ page }) => {
@@ -63,7 +63,29 @@ test.describe("OmaGBT end-to-end (demo mode)", () => {
     await page.getByLabel("Parent PIN").fill("1234");
     await page.getByRole("button", { name: /Unlock/i }).click();
     await expect(page.getByRole("heading", { name: "Parent dashboard" })).toBeVisible();
+    await expect(page.getByText(/Demo mode PIN/i)).toHaveCount(0);
     await expect(page.getByText("AI provider")).toBeVisible();
     await expect(page.getByText("Mock", { exact: true })).toBeVisible();
+  });
+
+  test("parent can wipe chats and memories", async ({ page }) => {
+    await page.goto("/chat");
+    const input = page.getByLabel("Type your message");
+    await input.fill("my favourite colour is teal");
+    await page.getByRole("button", { name: "Send" }).click();
+    await expect(page.getByText("my favourite colour is teal")).toBeVisible();
+
+    await page.goto("/parent");
+    await page.getByLabel("Parent PIN").fill("1234");
+    await page.getByRole("button", { name: /Unlock/i }).click();
+    await expect(page.getByRole("heading", { name: "Parent dashboard" })).toBeVisible();
+    await page.getByRole("tab", { name: "Memory" }).click();
+    await expect(page.getByText(/teal/i).first()).toBeVisible();
+    await page.getByRole("tab", { name: "Data" }).click();
+    await page.getByRole("button", { name: /Delete all data/i }).click();
+    await page.getByRole("button", { name: /Yes, delete everything/i }).click();
+    await expect(page.getByText(/has been removed/i)).toBeVisible({ timeout: 15000 });
+    await page.getByRole("tab", { name: "Memory" }).click();
+    await expect(page.getByText("Nothing remembered.")).toBeVisible();
   });
 });

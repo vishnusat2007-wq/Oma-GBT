@@ -10,7 +10,7 @@ export default defineConfig({
   test: {
     environment: "node",
     globals: true,
-    include: ["src/**/*.test.{ts,tsx}"],
+    include: ["src/**/*.test.{ts,tsx}", "convex/**/*.test.ts"],
     exclude: ["e2e/**", "node_modules/**"],
   },
 });

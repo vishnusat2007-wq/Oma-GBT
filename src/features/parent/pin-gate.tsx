@@ -6,12 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAppStore } from "@/lib/store/app-store";
-import { DEMO_PIN } from "@/lib/demo/seed";
 import { playSound } from "@/lib/sound";
 
 export function PinGate({ onUnlock }: { onUnlock: () => void }) {
   const parentPin = useAppStore((s) => s.parent.pin);
-  const demoMode = useAppStore((s) => s.demoMode);
   const soundOn = useAppStore((s) => s.preferences.soundOn);
   const [pin, setPin] = React.useState("");
   const [error, setError] = React.useState(false);
@@ -66,11 +64,6 @@ export function PinGate({ onUnlock }: { onUnlock: () => void }) {
           <Button className="w-full" size="lg" onClick={submit} disabled={locked}>
             <ShieldCheck className="h-5 w-5" /> Unlock
           </Button>
-          {demoMode && (
-            <p className="rounded-xl bg-muted px-3 py-2 text-xs text-muted-foreground">
-              Demo mode PIN: <span className="font-bold">{DEMO_PIN}</span>
-            </p>
-          )}
         </CardContent>
       </Card>
     </div>

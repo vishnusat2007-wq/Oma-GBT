@@ -50,8 +50,10 @@ Location: `src/lib/safety/moderation.ts` (unit-tested in `moderation.test.ts`).
   approval and are audited.
 - API routes set `Cache-Control: no-store` and `X-Content-Type-Options: nosniff`, and are
   rate-limited.
-- **Row Level Security** (see `supabase/migrations/0001_init.sql`) ensures one account can
-  never read another account's records.
+- **Household authorization.** Convex functions for this single-child app require
+  `OMAGBT_HOUSEHOLD_SECRET`. The secret stays on the Next.js server and in the Convex
+  deployment; the browser only receives an httpOnly session cookie after the existing
+  username/password check. There is no multi-account Supabase user table.
 - Rendered chat uses `react-markdown` **without raw HTML**, preventing HTML/script injection.
 - **Structured logging** excludes secrets and conversation content.
 - **Emergency switch:** parents can instantly disable all online tools.
